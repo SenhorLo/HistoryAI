@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import type { AuthRequest } from "./auth.js";
 
 // Lê um inteiro do ambiente com valor padrão de segurança
@@ -29,16 +29,25 @@ export const chatLimiter = rateLimit({
 });
 
 // --- Limite POR IP nos endpoints de autenticação (anti força bruta) ---
-// Padrão: 10 tentativas a cada 15 minutos por IP. Usa a chave padrão (IP),
-// que já trata IPv6 corretamente.
+// Padrão: 10 tentativas a cada 15 minutos por IP.
 const AUTH_WINDOW_MIN = envInt("AUTH_RATE_WINDOW_MIN", 15);
 const AUTH_MAX = envInt("AUTH_RATE_MAX", 10);
+
+// IP real do cliente. Em produção o app fica atrás do Cloudflare (Render),
+// então "CF-Connecting-IP" traz o IP verdadeiro de forma estável; sem ele,
+// cai no req.ip. ipKeyGenerator normaliza IPv6 corretamente.
+function clientIpKey(req: { headers: Record<string, unknown>; ip?: string }): string {
+  const cf = req.headers["cf-connecting-ip"];
+  const ip = (typeof cf === "string" && cf) || req.ip || "unknown";
+  return ipKeyGenerator(ip);
+}
 
 export const authLimiter = rateLimit({
   windowMs: AUTH_WINDOW_MIN * 60 * 1000,
   limit: AUTH_MAX,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => clientIpKey(req as never),
   handler: (_req, res) => {
     res.status(429).json({
       error: `Muitas tentativas. Aguarde ${AUTH_WINDOW_MIN} minutos e tente novamente.`,
