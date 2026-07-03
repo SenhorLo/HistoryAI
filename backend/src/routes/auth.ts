@@ -3,8 +3,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../services/db.js";
+import { authLimiter } from "../middleware/rateLimit.js";
 
 export const authRouter = Router();
+
+// Limite por IP em todo o roteador de auth (register + login) — anti força bruta
+authRouter.use(authLimiter);
 
 const credentialsSchema = z.object({
   email: z.string().email("E-mail inválido."),

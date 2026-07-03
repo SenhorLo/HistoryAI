@@ -4,6 +4,7 @@ import { prisma } from "../services/db.js";
 import { streamLLM, type LLMMessage } from "../services/llm.js";
 import { generateDocument, type DocKind } from "../services/documents.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
+import { chatLimiter } from "../middleware/rateLimit.js";
 
 export const chatRouter = Router();
 
@@ -34,7 +35,8 @@ function friendlyLLMError(err: unknown): string {
 }
 
 // POST /api/conversations/:id/chat — envia mensagem e transmite a resposta via SSE
-chatRouter.post("/:id/chat", async (req: AuthRequest, res) => {
+// chatLimiter roda após o requireAuth (do chatRouter.use) — limita por usuário
+chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0].message });

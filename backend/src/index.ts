@@ -11,6 +11,10 @@ import { FILES_DIR } from "./services/documents.js";
 
 const app = express();
 
+// Atrás do proxy do Render (e da maioria dos hosts): confia em 1 salto para
+// que req.ip reflita o IP real do cliente — necessário para o rate limit por IP
+app.set("trust proxy", 1);
+
 // Em produção o frontend é servido pelo próprio Express (mesma origem, CORS
 // dispensável). CORS_ORIGIN só é necessário se o front for hospedado em
 // domínio separado; sem ela, libera tudo (modo dev).
