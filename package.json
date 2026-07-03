@@ -1,0 +1,9 @@
+{
+  "name": "historyai",
+  "private": true,
+  "scripts": {
+    "build": "npm ci --prefix frontend && npm run build --prefix frontend && npm ci --prefix backend && npm run build --prefix backend",
+    "start": "npm start --prefix backend",
+    "db:deploy": "npm run db:deploy --prefix backend"
+  }
+}

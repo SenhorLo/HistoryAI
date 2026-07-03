@@ -1,0 +1,48 @@
+# === Segredos / variáveis de ambiente ===
+.env
+.env.*
+!.env.example
+*.env
+
+# === Dependências e builds ===
+node_modules/
+dist/
+dist-ssr/
+build/
+.prisma/
+
+# === Arquivos gerados em runtime (PDFs/slides) ===
+backend/files/
+
+# === Documentos internos de planejamento / andamento ===
+# (não vão para o repositório público — só o README.md fica versionado)
+PLANO.md
+SEGURANCA.md
+DEPLOY.md
+ideia.txt
+.planning/
+*.plano.md
+*.rascunho.md
+TODO.md
+NOTES.md
+
+# === Logs ===
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === Editores / SO ===
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local

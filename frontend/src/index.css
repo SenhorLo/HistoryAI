@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* Modo escuro por classe (.dark no <html>) — Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Efeito lava lamp de fundo ---------- */
+.lava-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+/* radial-gradient em vez de filter: blur(90px) — blur real em 4 elementos
+   animados de ~46vw força a GPU a re-rasterizar a tela inteira a cada frame */
+.lava-blob {
+  position: absolute;
+  border-radius: 9999px;
+  opacity: 0.5;
+  will-change: transform;
+  animation: lava-float ease-in-out infinite alternate;
+  background: radial-gradient(circle closest-side, var(--blob-color), transparent);
+}
+.dark .lava-blob { opacity: 0.22; }
+
+.lava-1 {
+  width: 58vw; height: 58vw;
+  left: -18vw; top: -20vh;
+  --blob-color: #f59e0b; /* âmbar */
+  animation-duration: 26s;
+}
+.lava-2 {
+  width: 48vw; height: 48vw;
+  right: -14vw; top: 24vh;
+  --blob-color: #fb923c; /* laranja */
+  animation-duration: 34s;
+  animation-delay: -10s;
+}
+.lava-3 {
+  width: 54vw; height: 54vw;
+  left: 20vw; bottom: -24vh;
+  --blob-color: #fbbf24; /* amarelo âmbar */
+  animation-duration: 40s;
+  animation-delay: -20s;
+}
+.lava-4 {
+  width: 34vw; height: 34vw;
+  left: 52vw; top: -12vh;
+  --blob-color: #d97706; /* âmbar profundo */
+  animation-duration: 30s;
+  animation-delay: -5s;
+}
+
+@keyframes lava-float {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(9vw, -7vh) scale(1.18); }
+  100% { transform: translate(-7vw, 9vh) scale(0.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lava-blob { animation: none; }
+}
+
+/* Tipografia das respostas em Markdown do HistoryAI — modo claro */
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  font-weight: 700;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  color: #92400e;
+}
+.markdown h1 { font-size: 1.35rem; }
+.markdown h2 { font-size: 1.2rem; }
+.markdown h3 { font-size: 1.05rem; }
+.markdown p { margin-bottom: 0.75em; line-height: 1.7; }
+.markdown ul,
+.markdown ol {
+  margin: 0.5em 0 0.75em 1.4em;
+}
+.markdown ul { list-style: disc; }
+.markdown ol { list-style: decimal; }
+.markdown li { margin-bottom: 0.3em; line-height: 1.6; }
+.markdown strong { color: #b45309; }
+.markdown blockquote {
+  border-left: 3px solid #d97706;
+  padding-left: 0.75em;
+  margin: 0.75em 0;
+  color: #57534e;
+  font-style: italic;
+}
+.markdown hr { border-color: #d6d3d1; margin: 1em 0; }
+.markdown a {
+  color: #b45309;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.markdown a:hover { color: #92400e; }
+.markdown code {
+  background: #e7e5e4;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Modo escuro */
+.dark .markdown h1,
+.dark .markdown h2,
+.dark .markdown h3 { color: #fef3c7; }
+.dark .markdown strong { color: #fde68a; }
+.dark .markdown blockquote { color: #d6d3d1; }
+.dark .markdown hr { border-color: #44403c; }
+.dark .markdown a { color: #fbbf24; }
+.dark .markdown a:hover { color: #fde68a; }
+.dark .markdown code { background: #292524; }
