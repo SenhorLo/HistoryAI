@@ -25,6 +25,7 @@ ideia.txt
 *.rascunho.md
 TODO.md
 NOTES.md
+att.txt
 
 # === Logs ===
 logs/
@@ -46,3 +47,6 @@ Thumbs.db
 *.sln
 *.sw?
 *.local
+
+# Config local do Claude Code
+.claude/
