@@ -3,6 +3,183 @@
 /* Modo escuro por classe (.dark no <html>) — Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   TOKENS SEMÂNTICOS
+   Trocam sozinhos entre claro/escuro. Componentes nunca usam
+   hex cru nem escalas do Tailwind (stone-400, amber-700...):
+   usam bg-surface, text-ink-muted, border-subtle etc.
+   Contrastes conferidos contra o fundo mais escuro de cada tema
+   (pior caso — as superfícies translúcidas só clareiam).
+   ============================================================ */
+:root {
+  --surface: #efe8da;              /* pergaminho */
+  --surface-raised: rgb(255 255 255 / 0.72);
+  --surface-sunken: rgb(255 255 255 / 0.55);
+  --surface-hover: rgb(120 113 108 / 0.1);
+  --surface-active: rgb(120 113 108 / 0.16);
+
+  --ink: #292524;                  /* 12.4:1 */
+  --ink-muted: #57534e;            /*  6.3:1 */
+  --ink-subtle: #6b645d;           /*  4.7:1 — placeholders e metadados */
+
+  --accent: #92400e;               /*  5.8:1 — âmbar para TEXTO */
+  --accent-solid: #b45309;         /* branco por cima = 5.0:1 */
+  --accent-solid-hover: #7c3308;   /* escurece no hover (clarear derrubaria o contraste) */
+  --on-accent: #ffffff;
+  --accent-wash: rgb(180 83 9 / 0.1);
+  --accent-wash-hover: rgb(180 83 9 / 0.18);
+  --accent-line: rgb(180 83 9 / 0.28);
+
+  --border-subtle: rgb(120 113 108 / 0.22);
+  --border-strong: rgb(120 113 108 / 0.42);
+
+  --danger: #b91c1c;               /*  5.3:1 */
+  --danger-wash: #fee2e2;
+  --danger-line: #fca5a5;
+
+  --focus: #b45309;
+
+  /* opacidade dos blobs do fundo lava */
+  --lava-opacity: 0.5;
+}
+
+.dark {
+  --surface: #0c0a09;
+  --surface-raised: rgb(28 25 23 / 0.72);
+  --surface-sunken: rgb(28 25 23 / 0.6);
+  --surface-hover: rgb(168 162 158 / 0.1);
+  --surface-active: rgb(168 162 158 / 0.16);
+
+  --ink: #f5f5f4;                  /* 18.1:1 */
+  --ink-muted: #a8a29e;            /*  7.8:1 */
+  --ink-subtle: #8a837d;           /*  5.2:1 */
+
+  --accent: #fbbf24;               /* 11.8:1 */
+  --accent-solid: #b45309;
+  --accent-solid-hover: #92400e;
+  --on-accent: #ffffff;
+  --accent-wash: rgb(180 83 9 / 0.22);
+  --accent-wash-hover: rgb(180 83 9 / 0.34);
+  --accent-line: rgb(251 191 36 / 0.26);
+
+  --border-subtle: rgb(168 162 158 / 0.16);
+  --border-strong: rgb(168 162 158 / 0.32);
+
+  --danger: #f87171;               /*  7.1:1 */
+  --danger-wash: rgb(69 10 10 / 0.5);
+  --danger-line: rgb(127 29 29 / 0.8);
+
+  --focus: #fbbf24;
+
+  --lava-opacity: 0.22;
+}
+
+/* `inline` faz as utilities apontarem para a var em vez de copiar o valor,
+   que é o que permite os overrides do .dark funcionarem */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-solid-hover: var(--accent-solid-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-wash: var(--accent-wash);
+  --color-accent-wash-hover: var(--accent-wash-hover);
+  --color-accent-line: var(--accent-line);
+
+  --color-subtle: var(--border-subtle);
+  --color-strong: var(--border-strong);
+
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+  --color-danger-line: var(--danger-line);
+
+  --color-focus: var(--focus);
+
+  /* Tipografia scholarly — Cormorant nos títulos, Crimson na leitura,
+     Cinzel só em caixa-alta pequena. Cormorant tem altura-x baixa:
+     não usar abaixo de 24px. */
+  --font-heading: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-body: "Crimson Pro", ui-serif, Georgia, serif;
+  --font-display: "Cinzel", ui-serif, Georgia, serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* Crimson Pro roda pequeno; 17px equivale a ~16px de um sans.
+       Sobe só o texto — mexer no font-size do <html> inflaria junto
+       todo espaçamento/largura em rem do Tailwind. */
+    font-size: 1.0625rem;
+    font-family: var(--font-body);
+    background-color: var(--surface);
+    color: var(--ink);
+    line-height: 1.6;
+    font-synthesis-weight: none;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    line-height: 1.15;
+  }
+
+  /* Anel de foco único para todo elemento focável por teclado.
+     Nunca remover sem substituir. */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Tailwind v4 não aplica mais cursor:pointer em button por padrão */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /* Overline em caixa-alta (Cinzel) */
+  .overline {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Pula direto para o conteúdo — só aparece ao receber foco */
+  .skip-link {
+    position: absolute;
+    left: 0.75rem;
+    top: -100px;
+    z-index: 100;
+    padding: 0.6rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--accent-solid);
+    color: var(--on-accent);
+    font-weight: 600;
+    transition: top 150ms ease;
+  }
+  .skip-link:focus {
+    top: 0.75rem;
+  }
+}
+
 /* ---------- Efeito lava lamp de fundo ---------- */
 .lava-bg {
   position: fixed;
@@ -16,12 +193,11 @@
 .lava-blob {
   position: absolute;
   border-radius: 9999px;
-  opacity: 0.5;
+  opacity: var(--lava-opacity);
   will-change: transform;
   animation: lava-float ease-in-out infinite alternate;
   background: radial-gradient(circle closest-side, var(--blob-color), transparent);
 }
-.dark .lava-blob { opacity: 0.22; }
 
 .lava-1 {
   width: 58vw; height: 58vw;
@@ -59,57 +235,81 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lava-blob { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-/* Tipografia das respostas em Markdown do HistoryAI — modo claro */
+/* ---------- Respostas em Markdown do HistoryAI ---------- */
+.markdown {
+  /* medida de leitura: ~70 caracteres por linha */
+  max-width: 70ch;
+}
 .markdown h1,
 .markdown h2,
 .markdown h3 {
-  font-weight: 700;
-  margin-top: 1.25em;
-  margin-bottom: 0.5em;
-  color: #92400e;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
+  color: var(--accent);
+  line-height: 1.2;
 }
-.markdown h1 { font-size: 1.35rem; }
-.markdown h2 { font-size: 1.2rem; }
-.markdown h3 { font-size: 1.05rem; }
-.markdown p { margin-bottom: 0.75em; line-height: 1.7; }
+.markdown h1 { font-size: 1.6rem; }
+.markdown h2 { font-size: 1.35rem; }
+.markdown h3 { font-size: 1.15rem; }
+.markdown p { margin-bottom: 0.8em; line-height: 1.7; }
 .markdown ul,
 .markdown ol {
-  margin: 0.5em 0 0.75em 1.4em;
+  margin: 0.5em 0 0.8em 1.4em;
 }
 .markdown ul { list-style: disc; }
 .markdown ol { list-style: decimal; }
-.markdown li { margin-bottom: 0.3em; line-height: 1.6; }
-.markdown strong { color: #b45309; }
+.markdown li { margin-bottom: 0.35em; line-height: 1.65; }
+.markdown li::marker { color: var(--accent); }
+.markdown strong { font-weight: 600; color: var(--accent); }
 .markdown blockquote {
-  border-left: 3px solid #d97706;
-  padding-left: 0.75em;
-  margin: 0.75em 0;
-  color: #57534e;
+  border-left: 3px solid var(--accent-line);
+  padding-left: 0.9em;
+  margin: 0.9em 0;
+  color: var(--ink-muted);
   font-style: italic;
 }
-.markdown hr { border-color: #d6d3d1; margin: 1em 0; }
+.markdown hr { border-color: var(--border-subtle); margin: 1.2em 0; }
 .markdown a {
-  color: #b45309;
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.markdown a:hover { color: #92400e; }
+.markdown a:hover { text-decoration-thickness: 2px; }
 .markdown code {
-  background: #e7e5e4;
-  padding: 0.1em 0.35em;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  background: var(--surface-active);
+  padding: 0.12em 0.35em;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
-
-/* Modo escuro */
-.dark .markdown h1,
-.dark .markdown h2,
-.dark .markdown h3 { color: #fef3c7; }
-.dark .markdown strong { color: #fde68a; }
-.dark .markdown blockquote { color: #d6d3d1; }
-.dark .markdown hr { border-color: #44403c; }
-.dark .markdown a { color: #fbbf24; }
-.dark .markdown a:hover { color: #fde68a; }
-.dark .markdown code { background: #292524; }
+.markdown pre {
+  background: var(--surface-active);
+  padding: 0.9em;
+  border-radius: 0.6rem;
+  overflow-x: auto;
+  margin-bottom: 0.9em;
+}
+.markdown pre code { background: none; padding: 0; }
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.9em;
+  display: block;
+  overflow-x: auto;
+}
+.markdown th,
+.markdown td {
+  border: 1px solid var(--border-subtle);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+.markdown th { font-weight: 600; background: var(--surface-hover); }
