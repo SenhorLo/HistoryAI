@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Scroll } from "lucide-react";
+import { ArrowLeft, Scroll } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 import LavaBackground from "../components/LavaBackground";
 import { Button } from "../components/ui/Button";
@@ -122,6 +122,15 @@ export default function AuthPage({ mode }: Props) {
             {isLogin ? "Cadastre-se" : "Entrar"}
           </Link>
         </form>
+
+        {/* saída sem beco: quem caiu aqui sem querer criar conta consegue voltar */}
+        <Link
+          to="/"
+          className="mt-4 flex items-center justify-center gap-1.5 min-h-11 text-sm text-ink-muted hover:text-ink transition-colors duration-200"
+        >
+          <ArrowLeft size={15} aria-hidden="true" />
+          Voltar para a página inicial
+        </Link>
       </div>
     </div>
   );
