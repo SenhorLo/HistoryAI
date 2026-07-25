@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Scroll } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
+import LavaBackground from "../components/LavaBackground";
+import { Button } from "../components/ui/Button";
+import { Field } from "../components/ui/Field";
+import { Alert } from "../components/ui/Alert";
 import { login, register } from "../lib/api";
 import { saveSession } from "../lib/auth";
 
@@ -9,10 +13,13 @@ interface Props {
   mode: "login" | "register";
 }
 
+const MIN_PASSWORD = 6;
+
 export default function AuthPage({ mode }: Props) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,9 +28,11 @@ export default function AuthPage({ mode }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setPasswordError(null);
 
-    if (password.length < 6) {
-      setError("A senha deve ter no mínimo 6 caracteres.");
+    if (password.length < MIN_PASSWORD) {
+      // erro fica no campo, não só num bloco no topo do formulário
+      setPasswordError(`A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`);
       return;
     }
 
@@ -42,102 +51,76 @@ export default function AuthPage({ mode }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#efe8da] dark:bg-stone-950 flex items-center justify-center px-4">
-      <div className="lava-bg">
-        <div className="lava-blob lava-1" />
-        <div className="lava-blob lava-2" />
-        <div className="lava-blob lava-3" />
-      </div>
-      <ThemeToggle className="absolute top-4 right-4 w-9 h-9 z-20" />
+    <div className="min-h-dvh bg-surface text-ink flex items-center justify-center px-4 py-10">
+      <LavaBackground />
+      <ThemeToggle className="absolute top-4 right-4 z-20" />
+
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <Scroll
             size={48}
-            className="mx-auto mb-3 text-amber-600"
+            className="mx-auto mb-3 text-accent"
             strokeWidth={1.5}
+            aria-hidden="true"
           />
-          <h1 className="text-3xl font-bold text-amber-900 dark:text-amber-100">
-            HistoryAI
-          </h1>
-          <p className="text-stone-500 dark:text-stone-400 mt-2">
+          <p className="overline text-accent">HistoryAI</p>
+          <h1 className="text-3xl font-semibold text-accent mt-1">
             E se a história tivesse sido diferente?
-          </p>
+          </h1>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white/70 border border-stone-400/25 dark:bg-stone-900/70 dark:border-stone-700/40 rounded-2xl p-8 shadow-xl"
+          noValidate
+          className="bg-surface-raised border border-subtle rounded-2xl p-8 shadow-xl"
         >
-          <h2 className="text-xl font-semibold text-stone-800 dark:text-stone-100 mb-6">
+          <h2 className="text-2xl font-semibold mb-6">
             {isLogin ? "Entrar" : "Criar conta"}
           </h2>
 
-          <label className="block mb-4">
-            <span className="text-sm text-stone-600 dark:text-stone-300">
-              E-mail
-            </span>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg bg-white/60 border border-stone-400/30 text-stone-800 placeholder-stone-400 dark:bg-stone-800/70 dark:border-stone-700 dark:text-stone-100 dark:placeholder-stone-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600/60"
-              placeholder="voce@exemplo.com"
-            />
-          </label>
+          <Field
+            label="E-mail"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="voce@exemplo.com"
+          />
 
-          <label className="block mb-6">
-            <span className="text-sm text-stone-600 dark:text-stone-300">
-              Senha
-            </span>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg bg-white/60 border border-stone-400/30 text-stone-800 placeholder-stone-400 dark:bg-stone-800/70 dark:border-stone-700 dark:text-stone-100 dark:placeholder-stone-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600/60"
-              placeholder="Mínimo de 6 caracteres"
-            />
-          </label>
+          <Field
+            label="Senha"
+            type="password"
+            required
+            minLength={MIN_PASSWORD}
+            autoComplete={isLogin ? "current-password" : "new-password"}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) setPasswordError(null);
+            }}
+            hint={isLogin ? undefined : `Mínimo de ${MIN_PASSWORD} caracteres.`}
+            error={passwordError ?? undefined}
+            placeholder="••••••"
+          />
 
-          {error && (
-            <p className="mb-4 text-sm text-red-600 bg-red-100 border border-red-300 dark:text-red-400 dark:bg-red-950/40 dark:border-red-900 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
+          {error && <Alert className="mb-4">{error}</Alert>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Aguarde..." : isLogin ? "Entrar" : "Cadastrar"}
-          </button>
+          </Button>
 
-          <p className="mt-5 text-sm text-stone-500 dark:text-stone-400 text-center">
-            {isLogin ? (
-              <>
-                Não tem conta?{" "}
-                <Link
-                  to="/registro"
-                  className="text-amber-700 dark:text-amber-400 hover:underline"
-                >
-                  Cadastre-se
-                </Link>
-              </>
-            ) : (
-              <>
-                Já tem conta?{" "}
-                <Link
-                  to="/login"
-                  className="text-amber-700 dark:text-amber-400 hover:underline"
-                >
-                  Entrar
-                </Link>
-              </>
-            )}
+          {/* alternar login/cadastro é ação primária: vira alvo de 44px em
+              vez de um link de 16px no meio da frase */}
+          <p className="mt-5 text-sm text-ink-muted text-center">
+            {isLogin ? "Não tem conta?" : "Já tem conta?"}
           </p>
+          <Link
+            to={isLogin ? "/registro" : "/login"}
+            className="mt-1 flex items-center justify-center min-h-11 text-accent font-semibold underline underline-offset-4"
+          >
+            {isLogin ? "Cadastre-se" : "Entrar"}
+          </Link>
         </form>
       </div>
     </div>

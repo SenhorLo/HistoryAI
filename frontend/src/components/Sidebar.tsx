@@ -1,5 +1,9 @@
-import { LogOut, Plus, Scroll, X } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { LogOut, Plus, Scroll } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import ConversationItem from "./ConversationItem";
+import { useIsDesktop } from "../hooks/useMediaQuery";
+import { cn } from "../lib/cn";
 import type { ConversationSummary } from "../lib/api";
 
 interface Props {
@@ -25,88 +29,109 @@ export default function Sidebar({
   onLogout,
   onClose,
 }: Props) {
+  const isDesktop = useIsDesktop();
+  const asideRef = useRef<HTMLElement>(null);
+  const previouslyFocused = useRef<Element | null>(null);
+
+  // Fora do desktop a gaveta fechada continua no DOM: sem `inert` o Tab
+  // caminha por links invisíveis fora da tela.
+  const hidden = !isDesktop && !open;
+
+  useEffect(() => {
+    if (isDesktop || !open) return;
+
+    previouslyFocused.current = document.activeElement;
+    asideRef.current?.querySelector<HTMLElement>("button, a")?.focus();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      // devolve o foco a quem abriu a gaveta
+      (previouslyFocused.current as HTMLElement | null)?.focus?.();
+    };
+  }, [open, isDesktop, onClose]);
+
   return (
     <>
-      {/* overlay no mobile */}
-      {open && (
+      {open && !isDesktop && (
         <div
           className="fixed inset-0 bg-black/50 z-20 md:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed md:relative z-30 h-full w-72 shrink-0 bg-white/70 dark:bg-stone-900/70 flex flex-col transition-transform duration-200 ${
-          open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }`}
+        ref={asideRef}
+        inert={hidden}
+        aria-label="Conversas"
+        className={cn(
+          "fixed md:relative z-30 h-full w-72 shrink-0 flex flex-col",
+          "bg-surface-raised transition-transform duration-200",
+          open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        )}
       >
         {/* divisa suave em degradê no lugar de borda dura */}
-        <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-stone-400/30 to-transparent dark:via-stone-600/30" />
-        <div className="p-4 border-b border-stone-400/20 dark:border-stone-700/30 flex items-center gap-2">
-          <Scroll size={24} className="text-amber-700 dark:text-amber-500" />
-          <span className="font-bold text-amber-900 dark:text-amber-100 text-lg">
-            HistoryAI
+        <div
+          aria-hidden="true"
+          className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-strong to-transparent"
+        />
+
+        <div className="p-4 border-b border-subtle flex items-center gap-2">
+          <Scroll size={22} className="text-accent" aria-hidden="true" />
+          <span className="font-display font-semibold tracking-wider text-accent">
+            HISTORYAI
           </span>
         </div>
 
-        <button
-          onClick={onNew}
-          className="mx-3 mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-amber-600/25 bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 dark:border-amber-700/40 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 dark:text-amber-200 py-2 text-sm font-medium transition-colors"
-        >
-          <Plus size={16} /> Nova conversa
-        </button>
+        <div className="px-3 pt-3">
+          <button
+            type="button"
+            onClick={onNew}
+            className="w-full min-h-11 flex items-center justify-center gap-1.5 rounded-lg border border-accent-line bg-accent-wash text-accent hover:bg-accent-wash-hover text-sm font-semibold transition-colors duration-200"
+          >
+            <Plus size={16} aria-hidden="true" /> Nova conversa
+          </button>
+        </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-          {conversations.length === 0 && (
-            <p className="text-stone-400 dark:text-stone-500 text-sm px-2 py-4 text-center">
+        <nav aria-label="Histórico de conversas" className="flex-1 overflow-y-auto px-3 py-3">
+          {conversations.length === 0 ? (
+            <p className="text-ink-subtle text-sm px-2 py-4 text-center">
               Suas conversas aparecerão aqui.
             </p>
+          ) : (
+            <ul className="space-y-1">
+              {conversations.map((c) => (
+                <ConversationItem
+                  key={c.id}
+                  id={c.id}
+                  title={c.title}
+                  active={c.id === activeId}
+                  onSelect={onSelect}
+                  onDelete={onDelete}
+                />
+              ))}
+            </ul>
           )}
-          {conversations.map((c) => (
-            <div
-              key={c.id}
-              className={`group flex items-center rounded-lg text-sm ${
-                c.id === activeId
-                  ? "bg-stone-500/15 text-stone-800 dark:bg-stone-700/40 dark:text-stone-100"
-                  : "text-stone-500 hover:bg-stone-500/10 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-700/25 dark:hover:text-stone-200"
-              }`}
-            >
-              <button
-                onClick={() => onSelect(c.id)}
-                className="flex-1 text-left px-3 py-2 truncate"
-                title={c.title}
-              >
-                {c.title}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(c.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 px-2 text-stone-400 hover:text-red-500 dark:text-stone-500 dark:hover:text-red-400 transition-opacity"
-                title="Apagar conversa"
-              >
-                <X size={15} />
-              </button>
-            </div>
-          ))}
         </nav>
 
-        <div className="p-3 border-t border-stone-400/20 dark:border-stone-700/30 text-sm">
-          <p
-            className="text-stone-400 dark:text-stone-500 truncate mb-2"
-            title={email}
-          >
+        <div className="p-3 border-t border-subtle">
+          <p className="text-ink-subtle text-sm truncate mb-2" title={email}>
             {email}
           </p>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={onLogout}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-stone-500/15 hover:bg-stone-500/25 text-stone-600 dark:bg-stone-700/40 dark:hover:bg-stone-600/50 dark:text-stone-300 py-1.5 transition-colors"
+              className="flex-1 min-h-11 flex items-center justify-center gap-1.5 rounded-lg bg-surface-active text-ink-muted hover:text-ink hover:bg-surface-hover text-sm transition-colors duration-200"
             >
-              <LogOut size={15} /> Sair
+              <LogOut size={15} aria-hidden="true" /> Sair
             </button>
-            <ThemeToggle className="w-9 py-1.5" />
+            <ThemeToggle />
           </div>
         </div>
       </aside>
