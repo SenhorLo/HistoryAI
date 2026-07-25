@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SendHorizontal, Square } from "lucide-react";
 import { Button } from "../ui/Button";
+import ModeSelector from "./ModeSelector";
+import type { AnswerMode } from "../../lib/api";
 
 const MAX_HEIGHT = 160;
 
@@ -8,6 +10,8 @@ interface Props {
   streaming: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
+  mode: AnswerMode;
+  onModeChange: (mode: AnswerMode) => void;
   /**
    * Texto injetado de fora (ex.: sugestão da tela vazia). É um objeto novo a
    * cada escolha para que reescolher a mesma sugestão volte a disparar.
@@ -19,6 +23,8 @@ export default function ChatComposer({
   streaming,
   onSend,
   onStop,
+  mode,
+  onModeChange,
   draft,
 }: Props) {
   const [input, setInput] = useState("");
@@ -78,6 +84,8 @@ export default function ChatComposer({
         <p id="chat-input-hint" className="sr-only">
           Pressione Enter para enviar, Shift mais Enter para quebrar linha.
         </p>
+
+        <ModeSelector mode={mode} onChange={onModeChange} disabled={streaming} />
 
         {streaming ? (
           <Button type="button" variant="secondary" onClick={onStop}>

@@ -1,5 +1,6 @@
 import { streamClaude } from "./claude.js";
 import { streamGemini } from "./gemini.js";
+import type { AnswerMode } from "../prompts/historyai.js";
 
 // Mensagem em formato neutro, independente do provedor de IA
 export interface LLMMessage {
@@ -10,6 +11,8 @@ export interface LLMMessage {
 export interface LLMOptions {
   // Força a saída em JSON válido (modo nativo no Gemini; instrução no Claude)
   json?: boolean;
+  // Profundidade da resposta escolhida pelo usuário. Padrão: "fast".
+  mode?: AnswerMode;
 }
 
 // Gera a resposta em pedaços de texto (deltas), abstraindo o provedor.
@@ -23,12 +26,19 @@ export function streamLLM(
   return streamGemini(history, options);
 }
 
-// Resposta completa (não-streaming) — usada na geração de documentos
+// Resposta completa (não-streaming) — usada na geração de documentos.
+// Documento sai sempre no modo detalhado: um PDF ou uma apresentação precisam
+// do tratamento completo, mesmo que o chat esteja no modo rápido.
 export async function completeLLM(
   history: LLMMessage[],
   options: LLMOptions = {},
 ): Promise<string> {
   let text = "";
-  for await (const delta of streamLLM(history, options)) text += delta;
+  for await (const delta of streamLLM(history, {
+    mode: "optimised",
+    ...options,
+  })) {
+    text += delta;
+  }
   return text;
 }

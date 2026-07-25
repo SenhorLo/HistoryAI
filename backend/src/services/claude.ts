@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { HISTORYAI_SYSTEM_PROMPT } from "../prompts/historyai.js";
-import type { LLMMessage } from "./llm.js";
+import { systemPrompt } from "../prompts/historyai.js";
+import type { LLMMessage, LLMOptions } from "./llm.js";
 
 // Cliente criado sob demanda para o servidor subir mesmo sem a chave configurada
 let client: Anthropic | null = null;
@@ -17,18 +17,31 @@ function getClient() {
   return client;
 }
 
+// Por modo: teto de saída e nível de esforço. "effort" controla profundidade de
+// raciocínio e gasto total de tokens; o padrão da API é "high".
+const MODE_CONFIG = {
+  fast: { maxTokens: 8000, effort: "low" },
+  optimised: { maxTokens: 64000, effort: "high" },
+} as const;
+
 export async function* streamClaude(
   history: LLMMessage[],
-  _options: import("./llm.js").LLMOptions = {}, // JSON garantido via prompt no Claude
+  options: LLMOptions = {}, // JSON garantido via prompt no Claude
 ): AsyncGenerator<string> {
+  const mode = options.mode ?? "fast";
+  const { maxTokens, effort } = MODE_CONFIG[mode];
+
   const stream = getClient().messages.stream({
     model: "claude-opus-4-8",
-    max_tokens: 64000,
+    max_tokens: maxTokens,
     thinking: { type: "adaptive" },
+    output_config: { effort },
+    // cache_control no prompt de sistema: cada modo tem seu próprio prefixo
+    // estável, então os dois se beneficiam do cache independentemente
     system: [
       {
         type: "text",
-        text: HISTORYAI_SYSTEM_PROMPT,
+        text: systemPrompt(mode),
         cache_control: { type: "ephemeral" },
       },
     ],

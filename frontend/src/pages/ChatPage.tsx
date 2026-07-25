@@ -13,7 +13,6 @@ import { clearSession, getEmail } from "../lib/auth";
 export default function ChatPage() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [draft, setDraft] = useState<{ text: string } | undefined>();
 
   const {
     conversations,
@@ -22,6 +21,10 @@ export default function ChatPage() {
     streaming,
     loadingConversation,
     error,
+    mode,
+    setMode,
+    draft,
+    setDraft,
     send,
     stop,
     selectConversation,
@@ -46,7 +49,8 @@ export default function ChatPage() {
 
   function logout() {
     clearSession();
-    navigate("/login");
+    // volta para a home, não para o login: sair não é o mesmo que querer entrar
+    navigate("/");
   }
 
   return (
@@ -86,7 +90,7 @@ export default function ChatPage() {
           messages={messages}
           streaming={streaming}
           loading={loadingConversation}
-          onPickExample={(text) => setDraft({ text })}
+          onPickExample={(text: string) => setDraft({ text })}
         />
 
         {error && (
@@ -99,6 +103,8 @@ export default function ChatPage() {
           streaming={streaming}
           onSend={send}
           onStop={stop}
+          mode={mode}
+          onModeChange={setMode}
           draft={draft}
         />
       </main>

@@ -5,6 +5,7 @@ import {
   getConversation,
   listConversations,
   streamChat,
+  type AnswerMode,
   type ConversationSummary,
 } from "../lib/api";
 
@@ -13,9 +14,16 @@ export interface LocalMessage {
   content: string;
 }
 
+const MODE_KEY = "historyai_mode";
+
+function savedMode(): AnswerMode {
+  return localStorage.getItem(MODE_KEY) === "optimised" ? "optimised" : "fast";
+}
+
 /**
  * Todo o estado da tela de chat: lista de conversas, cache de mensagens já
- * abertas, streaming SSE e cancelamento. A ChatPage só compõe a UI.
+ * abertas, streaming SSE, modo de resposta e cancelamento. A ChatPage só
+ * compõe a UI.
  */
 export function useChat() {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -24,6 +32,10 @@ export function useChat() {
   const [streaming, setStreaming] = useState(false);
   const [loadingConversation, setLoadingConversation] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setModeState] = useState<AnswerMode>(savedMode);
+  // texto injetado no campo de digitação (sugestão clicada ou pergunta
+  // devolvida pelo "Parar"). Objeto novo a cada vez para o efeito redisparar.
+  const [draft, setDraft] = useState<{ text: string } | undefined>();
 
   const abortRef = useRef<AbortController | null>(null);
   // espelho síncrono de activeId: os callbacks de fetch/stream precisam saber
@@ -32,6 +44,15 @@ export function useChat() {
   const cacheRef = useRef(new Map<string, LocalMessage[]>());
   const pendingDeltaRef = useRef("");
   const rafRef = useRef<number | null>(null);
+  // por que o stream foi cortado: "stop" devolve a pergunta ao campo,
+  // "switch" apenas desfaz a troca (o usuário mudou de conversa)
+  const abortReasonRef = useRef<"stop" | "switch" | null>(null);
+  const pendingQuestionRef = useRef("");
+
+  const setMode = useCallback((next: AnswerMode) => {
+    localStorage.setItem(MODE_KEY, next);
+    setModeState(next);
+  }, []);
 
   const refreshConversations = useCallback(async () => {
     try {
@@ -54,10 +75,15 @@ export function useChat() {
     [],
   );
 
-  const stop = useCallback(() => {
-    abortRef.current?.abort();
+  const abortStream = useCallback((reason: "stop" | "switch") => {
+    if (!abortRef.current) return;
+    abortReasonRef.current = reason;
+    abortRef.current.abort();
     abortRef.current = null;
   }, []);
+
+  /** Botão "Parar": cancela e devolve a pergunta ao campo de digitação. */
+  const stop = useCallback(() => abortStream("stop"), [abortStream]);
 
   const appendToLast = useCallback((chunk: string) => {
     setMessages((prev) => {
@@ -88,7 +114,7 @@ export function useChat() {
 
   const selectConversation = useCallback(
     async (id: string) => {
-      stop();
+      abortStream("switch");
       setError(null);
       activeIdRef.current = id;
       setActiveId(id);
@@ -121,7 +147,7 @@ export function useChat() {
         if (activeIdRef.current === id) setLoadingConversation(false);
       }
     },
-    [stop],
+    [abortStream],
   );
 
   const removeConversation = useCallback(
@@ -148,6 +174,8 @@ export function useChat() {
       setError(null);
       setStreaming(true);
       pendingDeltaRef.current = "";
+      abortReasonRef.current = null;
+      pendingQuestionRef.current = message;
       setMessages((prev) => [
         ...prev,
         { role: "user", content: message },
@@ -180,6 +208,7 @@ export function useChat() {
         await streamChat(
           convId,
           message,
+          mode,
           {
             // deltas do SSE são acumulados e aplicados no máximo uma vez por
             // frame — um setState por chunk re-renderizaria a conversa inteira
@@ -199,6 +228,23 @@ export function useChat() {
             onDone: () => {
               flushDelta();
               setStreaming(false);
+
+              const reason = abortReasonRef.current;
+              if (reason) {
+                // o servidor apagou a pergunta ao detectar a desconexão;
+                // espelhamos aqui para cliente e banco não divergirem
+                abortReasonRef.current = null;
+                cacheRef.current.delete(convId);
+                if (activeIdRef.current === convId) {
+                  setMessages((prev) => prev.slice(0, -2));
+                }
+                if (reason === "stop") {
+                  setDraft({ text: pendingQuestionRef.current });
+                }
+                refreshConversations();
+                return;
+              }
+
               setMessages((prev) => {
                 if (activeIdRef.current === convId)
                   cacheRef.current.set(convId, prev);
@@ -225,7 +271,7 @@ export function useChat() {
         abortRef.current = null;
       }
     },
-    [streaming, appendToLast, dropEmptyAssistant, refreshConversations],
+    [streaming, mode, appendToLast, dropEmptyAssistant, refreshConversations],
   );
 
   return {
@@ -235,6 +281,10 @@ export function useChat() {
     streaming,
     loadingConversation,
     error,
+    mode,
+    setMode,
+    draft,
+    setDraft,
     send,
     stop,
     selectConversation,

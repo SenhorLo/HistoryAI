@@ -85,9 +85,13 @@ export interface StreamHandlers {
   onError: (message: string) => void;
 }
 
+/** Profundidade da resposta. "fast" é o padrão. */
+export type AnswerMode = "fast" | "optimised";
+
 export async function streamChat(
   conversationId: string,
   message: string,
+  mode: AnswerMode,
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ) {
@@ -99,7 +103,7 @@ export async function streamChat(
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, mode }),
       signal,
     });
   } catch (err) {

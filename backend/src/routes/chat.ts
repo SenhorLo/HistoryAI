@@ -5,6 +5,7 @@ import { streamLLM, type LLMMessage } from "../services/llm.js";
 import { generateDocument, type DocKind } from "../services/documents.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { chatLimiter } from "../middleware/rateLimit.js";
+import { ANSWER_MODES } from "../prompts/historyai.js";
 
 export const chatRouter = Router();
 
@@ -12,6 +13,7 @@ chatRouter.use(requireAuth);
 
 const bodySchema = z.object({
   message: z.string().trim().min(1, "A mensagem não pode ser vazia.").max(8000),
+  mode: z.enum(ANSWER_MODES).optional(),
 });
 
 function sse(res: import("express").Response, event: string, data: unknown) {
@@ -41,7 +43,7 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0].message });
   }
-  const { message } = parsed.data;
+  const { message, mode } = parsed.data;
   const conversationId = String(req.params.id);
 
   const conversation = await prisma.conversation.findFirst({
@@ -52,8 +54,9 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
     return res.status(404).json({ error: "Conversa não encontrada." });
   }
 
-  // Salva a mensagem do usuário e, se for a primeira, usa-a como título
-  await prisma.message.create({
+  // Salva a mensagem do usuário e, se for a primeira, usa-a como título.
+  // Guardamos o id porque "Parar" desfaz a troca inteira (ver abaixo).
+  const userMessage = await prisma.message.create({
     data: { role: "user", content: message, conversationId: conversation.id },
   });
   if (conversation.messages.length === 0) {
@@ -82,6 +85,15 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
+
+  // O navegador fecha a conexão quando o usuário clica em "Parar". Sem detectar
+  // isso, o servidor seguia consumindo o stream do provedor até o fim e salvava
+  // a resposta inteira: o usuário via o texto cortado e, ao reabrir a conversa,
+  // encontrava a resposta completa — além de pagar a cota de IA integralmente.
+  let clientAborted = false;
+  req.on("close", () => {
+    clientAborted = true;
+  });
 
   // O marcador [[DOC:pdf]] / [[DOC:pptx]] é um comando interno da IA e não deve
   // aparecer para o usuário: seguramos os últimos caracteres do stream (holdback)
@@ -112,10 +124,26 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
   };
 
   try {
-    for await (const delta of streamLLM(history)) {
+    for await (const delta of streamLLM(history, { mode })) {
+      // sair do for-await fecha o async generator, o que propaga o cancelamento
+      // para o stream do provedor e encerra a geração de verdade
+      if (clientAborted) break;
       tail += delta;
       drainTail(false);
     }
+
+    if (clientAborted) {
+      // "Parar" desfaz a troca inteira: a pergunta volta para o campo de
+      // digitação no cliente, então ela não pode continuar na conversa —
+      // senão reenviar produziria a pergunta duplicada. Apagar a mensagem
+      // devolve a conversa ao estado anterior (inclusive o título, que é
+      // regravado no próximo envio por a conversa voltar a ficar vazia).
+      await prisma.message
+        .delete({ where: { id: userMessage.id } })
+        .catch(() => {});
+      return;
+    }
+
     drainTail(true);
 
     // Pedido de documento detectado — gera o arquivo e anexa o link à resposta
