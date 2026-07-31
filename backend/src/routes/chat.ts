@@ -6,6 +6,10 @@ import { generateDocument, type DocKind } from "../services/documents.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { chatLimiter } from "../middleware/rateLimit.js";
 import { ANSWER_MODES } from "../prompts/historyai.js";
+import {
+  attachmentsToPrompt,
+  MAX_ATTACHMENTS_PER_MESSAGE,
+} from "../services/attachments.js";
 
 export const chatRouter = Router();
 
@@ -14,6 +18,10 @@ chatRouter.use(requireAuth);
 const bodySchema = z.object({
   message: z.string().trim().min(1, "A mensagem não pode ser vazia.").max(8000),
   mode: z.enum(ANSWER_MODES).optional(),
+  attachmentIds: z
+    .array(z.string())
+    .max(MAX_ATTACHMENTS_PER_MESSAGE)
+    .optional(),
 });
 
 function sse(res: import("express").Response, event: string, data: unknown) {
@@ -44,14 +52,41 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
     return res.status(400).json({ error: parsed.error.issues[0].message });
   }
   const { message, mode } = parsed.data;
+  const attachmentIds = parsed.data.attachmentIds ?? [];
   const conversationId = String(req.params.id);
 
   const conversation = await prisma.conversation.findFirst({
     where: { id: conversationId, userId: req.userId },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+        // os anexos das mensagens ANTERIORES precisam voltar aqui: o histórico
+        // é remontado do banco a cada turno, então sem isto o arquivo enviado
+        // na primeira pergunta sumiria do contexto já na segunda
+        include: { attachments: true },
+      },
+    },
   });
   if (!conversation) {
     return res.status(404).json({ error: "Conversa não encontrada." });
+  }
+
+  /*
+    Só entram anexos deste usuário que ainda não foram vinculados a nenhuma
+    mensagem. O cliente manda apenas ids — o texto extraído nunca sai do
+    servidor, então não há como inflar o contexto forjando conteúdo.
+  */
+  const attachments = attachmentIds.length
+    ? await prisma.attachment.findMany({
+        where: { id: { in: attachmentIds }, userId: req.userId, messageId: null },
+        select: { id: true, name: true, kind: true, extractedText: true },
+      })
+    : [];
+
+  if (attachments.length !== attachmentIds.length) {
+    return res.status(400).json({
+      error: "Algum anexo expirou ou já foi enviado. Anexe o arquivo de novo.",
+    });
   }
 
   // Salva a mensagem do usuário e, se for a primeira, usa-a como título.
@@ -59,6 +94,13 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
   const userMessage = await prisma.message.create({
     data: { role: "user", content: message, conversationId: conversation.id },
   });
+
+  if (attachments.length > 0) {
+    await prisma.attachment.updateMany({
+      where: { id: { in: attachments.map((a) => a.id) } },
+      data: { messageId: userMessage.id },
+    });
+  }
   if (conversation.messages.length === 0) {
     const title = message.length > 60 ? `${message.slice(0, 57)}...` : message;
     await prisma.conversation.update({
@@ -72,13 +114,22 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
     });
   }
 
-  // Histórico completo — as APIs de LLM são stateless, então reenviamos tudo
+  /*
+    Histórico completo — as APIs de LLM são stateless, então reenviamos tudo.
+
+    O conteúdo dos anexos entra ANTES do texto da mensagem: o modelo lê o
+    documento e só então a pergunta sobre ele, que é a ordem que produz
+    resposta ancorada no arquivo em vez de resposta genérica.
+  */
+  const withAttachments = (content: string, items: typeof attachments) =>
+    items.length > 0 ? `${attachmentsToPrompt(items)}\n\n${content}` : content;
+
   const history: LLMMessage[] = [
     ...conversation.messages.map((m) => ({
       role: m.role as "user" | "assistant",
-      content: m.content,
+      content: withAttachments(m.content, m.attachments),
     })),
-    { role: "user" as const, content: message },
+    { role: "user" as const, content: withAttachments(message, attachments) },
   ];
 
   res.setHeader("Content-Type", "text/event-stream");
@@ -140,6 +191,19 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
       // senão reenviar produziria a pergunta duplicada. Apagar a mensagem
       // devolve a conversa ao estado anterior (inclusive o título, que é
       // regravado no próximo envio por a conversa voltar a ficar vazia).
+      /*
+        Desvincula os anexos ANTES de apagar a mensagem. O messageId tem
+        onDelete: Cascade, então apagar direto levaria os anexos junto — e o
+        cliente, que devolve a pergunta ao campo com os arquivos ainda
+        listados, reenviaria ids que não existem mais.
+        Soltos, eles voltam a ser válidos para o próximo envio.
+      */
+      await prisma.attachment
+        .updateMany({
+          where: { messageId: userMessage.id },
+          data: { messageId: null },
+        })
+        .catch(() => {});
       await prisma.message
         .delete({ where: { id: userMessage.id } })
         .catch(() => {});

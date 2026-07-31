@@ -31,7 +31,17 @@ conversationsRouter.get("/:id", async (req: AuthRequest, res) => {
     include: {
       messages: {
         orderBy: { createdAt: "asc" },
-        select: { id: true, role: true, content: true, createdAt: true },
+        select: {
+          id: true,
+          role: true,
+          content: true,
+          createdAt: true,
+          // só os metadados: o texto extraído pode ter 100 mil caracteres por
+          // anexo e nunca é exibido — ele existe para a IA, não para a tela
+          attachments: {
+            select: { id: true, name: true, kind: true, size: true },
+          },
+        },
       },
     },
   });

@@ -17,6 +17,7 @@ model User {
   displayName   String?
   createdAt     DateTime       @default(now())
   conversations Conversation[]
+  attachments   Attachment[]
 }
 
 model Conversation {
@@ -36,4 +37,39 @@ model Message {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
+  attachments    Attachment[]
+}
+
+/*
+  Arquivo enviado junto de uma pergunta.
+
+  Guardamos o TEXTO EXTRAÍDO, não os bytes. O motivo é que o histórico é
+  remontado do banco a cada mensagem (as APIs de LLM são stateless) e o disco
+  do Render é efêmero: um arquivo guardado em disco sumiria no próximo deploy
+  e a conversa ficaria com uma referência quebrada. Extrair uma vez também
+  significa pagar os tokens do arquivo uma vez, e não em todo turno seguinte.
+
+  O arquivo original nunca é gravado nem servido — o que dispensa autenticar
+  /api/files para conteúdo pessoal.
+*/
+model Attachment {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // nulo entre o envio do arquivo e o envio da pergunta. Um anexo que fique
+  // nulo por muito tempo é lixo de um envio abandonado e é recolhido depois.
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  name          String
+  mimeType      String
+  size          Int
+  kind          String
+  extractedText String   @db.Text
+  createdAt     DateTime @default(now())
+
+  // cobre tanto "os anexos desta mensagem" quanto a varredura de órfãos
+  @@index([userId, messageId])
+  @@index([messageId])
 }

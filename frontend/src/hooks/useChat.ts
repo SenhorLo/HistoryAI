@@ -6,12 +6,14 @@ import {
   listConversations,
   streamChat,
   type AnswerMode,
+  type AttachmentMeta,
   type ConversationSummary,
 } from "../lib/api";
 
 export interface LocalMessage {
   role: "user" | "assistant";
   content: string;
+  attachments?: AttachmentMeta[];
 }
 
 const MODE_KEY = "historyai_mode";
@@ -35,7 +37,9 @@ export function useChat() {
   const [mode, setModeState] = useState<AnswerMode>(savedMode);
   // texto injetado no campo de digitação (sugestão clicada ou pergunta
   // devolvida pelo "Parar"). Objeto novo a cada vez para o efeito redisparar.
-  const [draft, setDraft] = useState<{ text: string } | undefined>();
+  const [draft, setDraft] = useState<
+    { text: string; attachments?: AttachmentMeta[] } | undefined
+  >();
 
   const abortRef = useRef<AbortController | null>(null);
   // espelho síncrono de activeId: os callbacks de fetch/stream precisam saber
@@ -48,6 +52,10 @@ export function useChat() {
   // "switch" apenas desfaz a troca (o usuário mudou de conversa)
   const abortReasonRef = useRef<"stop" | "switch" | null>(null);
   const pendingQuestionRef = useRef("");
+  // o servidor desvincula os anexos ao detectar a desconexão, em vez de
+  // apagá-los — então eles continuam válidos e voltam para o composer junto
+  // com a pergunta, prontos para reenviar
+  const pendingAttachmentsRef = useRef<AttachmentMeta[]>([]);
 
   const setMode = useCallback((next: AnswerMode) => {
     localStorage.setItem(MODE_KEY, next);
@@ -135,6 +143,7 @@ export function useChat() {
         const msgs = detail.messages.map((m) => ({
           role: m.role,
           content: m.content,
+          ...(m.attachments?.length ? { attachments: m.attachments } : {}),
         }));
         cacheRef.current.set(id, msgs);
         setMessages(msgs);
@@ -167,7 +176,7 @@ export function useChat() {
   );
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, attachments: AttachmentMeta[] = []) => {
       const message = text.trim();
       if (!message || streaming) return;
 
@@ -176,9 +185,14 @@ export function useChat() {
       pendingDeltaRef.current = "";
       abortReasonRef.current = null;
       pendingQuestionRef.current = message;
+      pendingAttachmentsRef.current = attachments;
       setMessages((prev) => [
         ...prev,
-        { role: "user", content: message },
+        {
+          role: "user",
+          content: message,
+          ...(attachments.length > 0 ? { attachments } : {}),
+        },
         { role: "assistant", content: "" },
       ]);
 
@@ -209,6 +223,7 @@ export function useChat() {
           convId,
           message,
           mode,
+          attachments.map((item) => item.id),
           {
             // deltas do SSE são acumulados e aplicados no máximo uma vez por
             // frame — um setState por chunk re-renderizaria a conversa inteira
@@ -239,7 +254,10 @@ export function useChat() {
                   setMessages((prev) => prev.slice(0, -2));
                 }
                 if (reason === "stop") {
-                  setDraft({ text: pendingQuestionRef.current });
+                  setDraft({
+                    text: pendingQuestionRef.current,
+                    attachments: pendingAttachmentsRef.current,
+                  });
                 }
                 refreshConversations();
                 return;

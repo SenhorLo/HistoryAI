@@ -11,6 +11,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   createdAt: string;
+  attachments?: AttachmentMeta[];
 }
 
 export interface ConversationDetail extends ConversationSummary {
@@ -82,6 +83,38 @@ export function updateDisplayName(displayName: string) {
   });
 }
 
+// --- Anexos ---
+
+export type AttachmentKind = "image" | "pdf" | "doc" | "sheet" | "text";
+
+/**
+ * Só metadados. O texto extraído do arquivo fica no servidor: ele existe
+ * para a IA ler, não para a tela mostrar, e pode ter 100 mil caracteres.
+ */
+export interface AttachmentMeta {
+  id: string;
+  name: string;
+  kind: AttachmentKind;
+  size: number;
+  /** O conteúdo foi cortado no teto de caracteres. */
+  truncated?: boolean;
+}
+
+/** Envia o arquivo, que já volta com o conteúdo extraído e guardado. */
+export function uploadAttachment(file: File): Promise<AttachmentMeta> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  return request<AttachmentMeta>("/attachments", {
+    method: "POST",
+    body: form,
+  });
+}
+
+/** Remove um anexo que ainda não foi enviado com nenhuma mensagem. */
+export function deleteAttachment(id: string): Promise<void> {
+  return request<void>(`/attachments/${id}`, { method: "DELETE" });
+}
+
 // --- Ditado por voz ---
 
 /** Envia a gravação e devolve o texto ditado, para o usuário revisar. */
@@ -128,6 +161,7 @@ export async function streamChat(
   conversationId: string,
   message: string,
   mode: AnswerMode,
+  attachmentIds: string[],
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ) {
@@ -139,7 +173,7 @@ export async function streamChat(
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-      body: JSON.stringify({ message, mode }),
+      body: JSON.stringify({ message, mode, attachmentIds }),
       signal,
     });
   } catch (err) {

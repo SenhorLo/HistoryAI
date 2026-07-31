@@ -59,6 +59,7 @@ export default function MessageList({
                 key={i}
                 role={m.role}
                 content={m.content}
+                attachments={m.attachments}
                 streaming={streaming && i === messages.length - 1}
               />
             ))}

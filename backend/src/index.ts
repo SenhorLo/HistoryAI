@@ -7,6 +7,7 @@ import cors from "cors";
 import { authRouter } from "./routes/auth.js";
 import { profileRouter } from "./routes/profile.js";
 import { transcribeRouter } from "./routes/transcribe.js";
+import { attachmentsRouter } from "./routes/attachments.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { chatRouter } from "./routes/chat.js";
 import { FILES_DIR } from "./services/documents.js";
@@ -33,6 +34,7 @@ app.use("/api/files", express.static(FILES_DIR));
 app.use("/api/auth", authRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/transcribe", transcribeRouter);
+app.use("/api/attachments", attachmentsRouter);
 app.use("/api/conversations", conversationsRouter);
 app.use("/api/conversations", chatRouter);
 
