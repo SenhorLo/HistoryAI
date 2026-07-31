@@ -6,19 +6,20 @@ import LavaBackground from "../components/LavaBackground";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Alert } from "../components/ui/Alert";
+import PasswordChecklist from "../components/ui/PasswordChecklist";
 import { login, register } from "../lib/api";
 import { saveSession } from "../lib/auth";
+import { emailFailure, isPasswordValid } from "../lib/validation";
 
 interface Props {
   mode: "login" | "register";
 }
 
-const MIN_PASSWORD = 6;
-
 export default function AuthPage({ mode }: Props) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,12 +29,24 @@ export default function AuthPage({ mode }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setEmailError(null);
     setPasswordError(null);
 
-    if (password.length < MIN_PASSWORD) {
-      // erro fica no campo, não só num bloco no topo do formulário
-      setPasswordError(`A senha deve ter no mínimo ${MIN_PASSWORD} caracteres.`);
-      return;
+    /*
+      Validação só no cadastro. No login as regras não se aplicam: quem criou
+      a conta antes delas tem senha (e possivelmente domínio) fora do padrão
+      e precisa continuar entrando — o backend segue a mesma lógica.
+    */
+    if (!isLogin) {
+      const emailIssue = emailFailure(email);
+      if (emailIssue) {
+        setEmailError(emailIssue);
+        return;
+      }
+      if (!isPasswordValid(password)) {
+        setPasswordError("A senha ainda não atende aos requisitos abaixo.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -41,7 +54,7 @@ export default function AuthPage({ mode }: Props) {
       const result = isLogin
         ? await login(email, password)
         : await register(email, password);
-      saveSession(result.token, result.email);
+      saveSession(result.token, result.email, result.displayName ?? null);
       navigate("/chat");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro inesperado.");
@@ -63,7 +76,7 @@ export default function AuthPage({ mode }: Props) {
             strokeWidth={1.5}
             aria-hidden="true"
           />
-          <p className="overline text-accent">HistoryAI</p>
+          <p className="section-label text-accent">HistoryAI</p>
           <h1 className="text-3xl font-semibold text-accent mt-1">
             E se a história tivesse sido diferente?
           </h1>
@@ -84,25 +97,31 @@ export default function AuthPage({ mode }: Props) {
             required
             autoComplete="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="voce@exemplo.com"
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(null);
+            }}
+            error={emailError ?? undefined}
+            placeholder="voce@gmail.com"
           />
 
           <Field
             label="Senha"
             type="password"
             required
-            minLength={MIN_PASSWORD}
             autoComplete={isLogin ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
               if (passwordError) setPasswordError(null);
             }}
-            hint={isLogin ? undefined : `Mínimo de ${MIN_PASSWORD} caracteres.`}
             error={passwordError ?? undefined}
-            placeholder="••••••"
+            placeholder="••••••••"
           />
+
+          {/* requisitos só no cadastro: no login eles seriam ruído, e ainda
+              exporiam a política de senha para quem está tentando adivinhar */}
+          {!isLogin && <PasswordChecklist value={password} />}
 
           {error && <Alert className="mb-4">{error}</Alert>}
 

@@ -45,17 +45,33 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 // --- Autenticação ---
 
+export interface AuthResult {
+  token: string;
+  email: string;
+  /** nulo enquanto o usuário não escolheu como quer ser chamado */
+  displayName: string | null;
+}
+
 export function register(email: string, password: string) {
-  return request<{ token: string; email: string }>("/auth/register", {
+  return request<AuthResult>("/auth/register", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
 }
 
 export function login(email: string, password: string) {
-  return request<{ token: string; email: string }>("/auth/login", {
+  return request<AuthResult>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+// --- Perfil ---
+
+export function updateDisplayName(displayName: string) {
+  return request<{ email: string; displayName: string }>("/profile", {
+    method: "PATCH",
+    body: JSON.stringify({ displayName }),
   });
 }
 

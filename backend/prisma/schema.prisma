@@ -12,6 +12,9 @@ model User {
   email         String         @unique
   passwordHash  String? // nulo quando a conta foi criada via Google
   googleId      String?        @unique
+  // como o usuário quer ser chamado. Nulo até ele informar — aí a saudação
+  // do chat cai no prefixo do e-mail
+  displayName   String?
   createdAt     DateTime       @default(now())
   conversations Conversation[]
 }
