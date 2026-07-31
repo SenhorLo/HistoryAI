@@ -1,6 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { SendHorizontal, Square } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { LoaderCircle, Mic, SendHorizontal, Square } from "lucide-react";
 import ModeSelector from "./ModeSelector";
+import RecordingBar from "./RecordingBar";
+import { Alert } from "../ui/Alert";
+import { IconButton } from "../ui/Button";
+import { useAudioRecorder } from "../../hooks/useAudioRecorder";
 import { cn } from "../../lib/cn";
 import type { AnswerMode } from "../../lib/api";
 
@@ -31,6 +35,24 @@ export default function ChatComposer({
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  /*
+    O ditado NÃO envia sozinho: o texto entra no campo para o usuário revisar.
+    Transcrição erra nome próprio e data, que é exatamente o que mais importa
+    num chat de história — mandar direto viraria pergunta errada.
+  */
+  const appendTranscript = useCallback((text: string) => {
+    setInput((current) => {
+      const trimmed = current.trimEnd();
+      return trimmed ? `${trimmed} ${text}` : text;
+    });
+    textareaRef.current?.focus();
+  }, []);
+
+  const recorder = useAudioRecorder(appendTranscript);
+  const { cancel: cancelRecording } = recorder;
+  const recording =
+    recorder.state === "recording" || recorder.state === "transcribing";
+
   // Altura derivada do valor, num layout effect: cobre digitação, sugestão
   // injetada e limpeza pós-envio com um caminho só. Fazer isso via
   // requestAnimationFrame não funcionaria — rAF não dispara em aba oculta.
@@ -48,8 +70,21 @@ export default function ChatComposer({
     textareaRef.current?.focus();
   }, [draft]);
 
+  // Escape descarta a gravação — mesmo gesto que fecha a gaveta e o diálogo
+  useEffect(() => {
+    if (!recording) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cancelRecording();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // depende só de `cancel` (estável, vem de useCallback): usar o objeto
+    // `recorder` inteiro reassinaria o listener a cada render do composer
+  }, [recording, cancelRecording]);
+
   function submit() {
-    if (!input.trim() || streaming) return;
+    // enviar no meio do ditado perderia o áudio que ainda está sendo gravado
+    if (!input.trim() || streaming || recording) return;
     onSend(input);
     setInput("");
   }
@@ -94,30 +129,69 @@ export default function ChatComposer({
           Pressione Enter para enviar, Shift mais Enter para quebrar linha.
         </p>
 
-        <div className="flex items-center justify-between gap-2 px-2 pb-2">
-          <ModeSelector mode={mode} onChange={onModeChange} disabled={streaming} />
+        {recording ? (
+          <RecordingBar
+            seconds={recorder.seconds}
+            transcribing={recorder.state === "transcribing"}
+            onCancel={recorder.cancel}
+            onFinish={recorder.finish}
+          />
+        ) : (
+          <div className="flex items-center justify-between gap-2 px-2 pb-2">
+            <ModeSelector
+              mode={mode}
+              onChange={onModeChange}
+              disabled={streaming}
+            />
 
-          {streaming ? (
-            <button
-              type="button"
-              onClick={onStop}
-              className="ui-text inline-flex items-center gap-2 rounded-xl min-h-11 px-4 font-semibold border border-accent-line bg-accent-wash text-accent hover:bg-accent-wash-hover transition-colors duration-200"
-            >
-              <Square size={15} fill="currentColor" aria-hidden="true" />
-              Parar
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              aria-label="Enviar mensagem"
-              className="inline-flex items-center justify-center rounded-xl min-h-11 min-w-11 bg-accent-solid text-on-accent hover:bg-accent-solid-hover disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200"
-            >
-              <SendHorizontal size={17} aria-hidden="true" />
-            </button>
-          )}
-        </div>
+            <div className="flex items-center gap-1">
+              {/* o botão só existe onde dá para gravar: mostrá-lo desabilitado
+                  num navegador sem suporte só ocuparia a ordem de tabulação */}
+              {recorder.supported && !streaming && (
+                <IconButton
+                  label="Ditar mensagem"
+                  onClick={recorder.start}
+                  disabled={recorder.state === "requesting"}
+                >
+                  {recorder.state === "requesting" ? (
+                    <LoaderCircle
+                      size={18}
+                      className="animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Mic size={18} aria-hidden="true" />
+                  )}
+                </IconButton>
+              )}
+
+              {streaming ? (
+                <button
+                  type="button"
+                  onClick={onStop}
+                  className="ui-text inline-flex items-center gap-2 rounded-xl min-h-11 px-4 font-semibold border border-accent-line bg-accent-wash text-accent hover:bg-accent-wash-hover transition-colors duration-200"
+                >
+                  <Square size={15} fill="currentColor" aria-hidden="true" />
+                  Parar
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!input.trim()}
+                  aria-label="Enviar mensagem"
+                  className="inline-flex items-center justify-center rounded-xl min-h-11 min-w-11 bg-accent-solid text-on-accent hover:bg-accent-solid-hover disabled:opacity-40 disabled:pointer-events-none transition-colors duration-200"
+                >
+                  <SendHorizontal size={17} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </form>
+
+      {recorder.error && (
+        <Alert className="max-w-3xl mx-auto mt-2">{recorder.error}</Alert>
+      )}
 
       <p className="ui-text mt-2.5 text-center text-xs text-ink-subtle">
         O HistoryAI separa fato documentado de especulação — mas confira o que

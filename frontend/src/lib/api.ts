@@ -19,10 +19,17 @@ export interface ConversationDetail extends ConversationSummary {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
+  /*
+    Envio de arquivo vai como FormData, e aí o Content-Type NÃO pode ser
+    definido aqui: o navegador precisa montá-lo sozinho para incluir o
+    boundary do multipart. Fixar "application/json" faria o servidor
+    receber um corpo que não consegue separar em campos.
+  */
+  const isForm = options.body instanceof FormData;
   const res = await fetch(`/api${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isForm ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -73,6 +80,19 @@ export function updateDisplayName(displayName: string) {
     method: "PATCH",
     body: JSON.stringify({ displayName }),
   });
+}
+
+// --- Ditado por voz ---
+
+/** Envia a gravação e devolve o texto ditado, para o usuário revisar. */
+export async function transcribeAudio(audio: Blob): Promise<string> {
+  const form = new FormData();
+  form.append("audio", audio, "gravacao.wav");
+  const { text } = await request<{ text: string }>("/transcribe", {
+    method: "POST",
+    body: form,
+  });
+  return text;
 }
 
 // --- Conversas ---

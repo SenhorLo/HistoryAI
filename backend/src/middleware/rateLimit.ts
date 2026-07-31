@@ -28,6 +28,26 @@ export const chatLimiter = rateLimit({
   },
 });
 
+// --- Limite POR USUÁRIO na transcrição de áudio ---
+// Mais apertado que o do chat de propósito: um minuto de áudio custa 1.920
+// tokens de entrada, então poucas gravações longas queimam mais cota que
+// muitas perguntas de texto. Também roda DEPOIS do requireAuth.
+const MEDIA_WINDOW_MIN = envInt("MEDIA_RATE_WINDOW_MIN", 5);
+const MEDIA_MAX = envInt("MEDIA_RATE_MAX", 10);
+
+export const mediaLimiter = rateLimit({
+  windowMs: MEDIA_WINDOW_MIN * 60 * 1000,
+  limit: MEDIA_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? "anon",
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: `Você atingiu o limite de ${MEDIA_MAX} envios de áudio ou arquivo a cada ${MEDIA_WINDOW_MIN} minutos. Aguarde um pouco.`,
+    });
+  },
+});
+
 // --- Limite POR IP nos endpoints de autenticação (anti força bruta) ---
 // Padrão: 10 tentativas a cada 15 minutos por IP.
 const AUTH_WINDOW_MIN = envInt("AUTH_RATE_WINDOW_MIN", 15);
