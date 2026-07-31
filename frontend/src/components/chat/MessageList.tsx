@@ -8,6 +8,8 @@ interface Props {
   messages: LocalMessage[];
   streaming: boolean;
   loading: boolean;
+  /** nome já resolvido: apelido escolhido, ou prefixo do e-mail */
+  greetingName: string;
   onPickExample: (text: string) => void;
 }
 
@@ -15,6 +17,7 @@ export default function MessageList({
   messages,
   streaming,
   loading,
+  greetingName,
   onPickExample,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -48,7 +51,7 @@ export default function MessageList({
             Abrindo conversa...
           </p>
         ) : messages.length === 0 ? (
-          <EmptyState onPickExample={onPickExample} />
+          <EmptyState name={greetingName} onPickExample={onPickExample} />
         ) : (
           <div role="log" aria-label="Histórico da conversa" className="space-y-6">
             {messages.map((m, i) => (

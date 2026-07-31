@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react";
-import { LogOut, Plus, Scroll } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { LogOut, Plus, Scroll, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConversationItem from "./ConversationItem";
+import { IconButton } from "./ui/Button";
 import { useIsDesktop } from "../hooks/useMediaQuery";
+import { groupConversations } from "../lib/groupConversations";
 import { cn } from "../lib/cn";
 import type { ConversationSummary } from "../lib/api";
 
@@ -32,6 +34,11 @@ export default function Sidebar({
   const isDesktop = useIsDesktop();
   const asideRef = useRef<HTMLElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
+
+  const groups = useMemo(
+    () => groupConversations(conversations),
+    [conversations],
+  );
 
   // Fora do desktop a gaveta fechada continua no DOM: sem `inert` o Tab
   // caminha por links invisíveis fora da tela.
@@ -70,68 +77,88 @@ export default function Sidebar({
         inert={hidden}
         aria-label="Conversas"
         className={cn(
-          "fixed md:relative z-30 h-full w-72 shrink-0 flex flex-col",
-          "bg-surface-raised transition-transform duration-200",
+          "fixed md:relative z-30 h-full w-[17.5rem] shrink-0 flex flex-col",
+          "bg-surface-sunken border-r border-subtle",
+          "transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
-        {/* divisa suave em degradê no lugar de borda dura */}
-        <div
-          aria-hidden="true"
-          className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-strong to-transparent"
-        />
-
-        <div className="p-4 border-b border-subtle flex items-center gap-2">
-          <Scroll size={22} className="text-accent" aria-hidden="true" />
-          <span className="font-display font-semibold tracking-wider text-accent">
-            HISTORYAI
+        <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-accent-wash border border-accent-line shrink-0">
+              <Scroll size={18} className="text-accent" aria-hidden="true" />
+            </span>
+            <span className="font-system font-semibold tracking-widest text-accent truncate">
+              HISTORYAI
+            </span>
           </span>
+          {/* fechar a gaveta no mobile sem precisar acertar o overlay.
+              Condicional, não `md:hidden`: a classe não venceria o
+              `inline-flex` da base do IconButton. */}
+          {!isDesktop && (
+            <IconButton label="Fechar menu" onClick={onClose}>
+              <X size={18} aria-hidden="true" />
+            </IconButton>
+          )}
         </div>
 
-        <div className="px-3 pt-3">
+        <div className="px-3 pb-3">
           <button
             type="button"
             onClick={onNew}
-            className="w-full min-h-11 flex items-center justify-center gap-1.5 rounded-lg border border-accent-line bg-accent-wash text-accent hover:bg-accent-wash-hover text-sm font-semibold transition-colors duration-200"
+            className="ui-text w-full min-h-11 flex items-center justify-center gap-2 rounded-xl bg-accent-solid text-on-accent hover:bg-accent-solid-hover font-semibold transition-colors duration-200"
           >
-            <Plus size={16} aria-hidden="true" /> Nova conversa
+            <Plus size={17} aria-hidden="true" /> Nova conversa
           </button>
         </div>
 
-        <nav aria-label="Histórico de conversas" className="flex-1 overflow-y-auto px-3 py-3">
-          {conversations.length === 0 ? (
-            <p className="text-ink-subtle text-sm px-2 py-4 text-center">
+        <nav
+          aria-label="Histórico de conversas"
+          className="flex-1 overflow-y-auto px-3 pb-3"
+        >
+          {groups.length === 0 ? (
+            <p className="ui-text text-ink-subtle text-sm px-2 py-6 text-center">
               Suas conversas aparecerão aqui.
             </p>
           ) : (
-            <ul className="space-y-1">
-              {conversations.map((c) => (
-                <ConversationItem
-                  key={c.id}
-                  id={c.id}
-                  title={c.title}
-                  active={c.id === activeId}
-                  onSelect={onSelect}
-                  onDelete={onDelete}
-                />
-              ))}
-            </ul>
+            groups.map((group) => (
+              <section key={group.label} className="mb-4 last:mb-0">
+                <h2 className="section-label text-accent px-2 mb-2">
+                  {group.label}
+                </h2>
+                <ul className="space-y-0.5">
+                  {group.items.map((c) => (
+                    <ConversationItem
+                      key={c.id}
+                      id={c.id}
+                      title={c.title}
+                      active={c.id === activeId}
+                      onSelect={onSelect}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))
           )}
         </nav>
 
-        <div className="p-3 border-t border-subtle">
-          <p className="text-ink-subtle text-sm truncate mb-2" title={email}>
-            {email}
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onLogout}
-              className="flex-1 min-h-11 flex items-center justify-center gap-1.5 rounded-lg bg-surface-active text-ink-muted hover:text-ink hover:bg-surface-hover text-sm transition-colors duration-200"
+        {/* card do usuário, fixo no rodapé */}
+        <div className="p-3">
+          <div className="flex items-center gap-2.5 rounded-xl border border-subtle bg-surface-raised p-2.5">
+            <span
+              aria-hidden="true"
+              className="grid place-items-center w-9 h-9 rounded-full bg-accent-wash border border-accent-line text-accent font-system text-sm shrink-0"
             >
-              <LogOut size={15} aria-hidden="true" /> Sair
-            </button>
-            <ThemeToggle />
+              {email.slice(0, 1).toUpperCase() || "?"}
+            </span>
+            <p className="ui-text flex-1 min-w-0 text-sm text-ink-muted truncate" title={email}>
+              {email}
+            </p>
+            <ThemeToggle className="w-11" />
+            <IconButton label="Sair da conta" onClick={onLogout}>
+              <LogOut size={17} aria-hidden="true" />
+            </IconButton>
           </div>
         </div>
       </aside>

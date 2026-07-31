@@ -7,7 +7,7 @@ type Size = "md" | "lg";
 
 /* min-h-11 = 44px: mínimo de alvo de toque. */
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold " +
+  "ui-text inline-flex items-center justify-center gap-2 rounded-xl font-semibold " +
   "min-h-11 transition-colors duration-200 " +
   "disabled:opacity-60 disabled:pointer-events-none";
 

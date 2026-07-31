@@ -33,17 +33,23 @@ O que se aproveitou da recomendação foi a **tipografia**.
 
 ## Tipografia
 
-Pareamento "Academia Mobile" da base — knowledge apps / scholarly reading.
+Duas famílias com **papéis semânticos distintos** — a diferença de desenho é
+o que separa, de relance, o que o usuário lê do que o sistema diz.
 
 | Papel | Fonte | Uso |
 |---|---|---|
-| `font-heading` | Cormorant Garamond | Títulos. **Nunca abaixo de 24px** — altura-x baixa e traços finos |
-| `font-body` | Crimson Pro | Corpo, UI e respostas da IA |
-| `font-display` | Cinzel | Só caixa-alta pequena: logo, overlines (`.overline`) |
+| `font-body` / `font-heading` | **Nunito** | Conteúdo: mensagens da IA, títulos de conversa, headings. Terminais arredondados |
+| `font-system` | **Rubik** | Chrome: rótulos de grupo, botões, dicas, rodapé, meta |
 
-Base de corpo: **17px** (`1.0625rem` no `body`). Crimson Pro roda pequeno;
-17px equivale a ~16px de um sans. O `font-size` do `<html>` fica intocado —
-mexer nele inflaria todo espaçamento em `rem` do Tailwind junto.
+Aplicação do chrome pela classe `.ui-text`; rótulos de seção pela `.overline`
+(Rubik + caixa-alta + entreletra 0.14em).
+
+**Por que duas famílias:** numa barra lateral, "ÚLTIMOS 7 DIAS" e um título de
+conversa competiam visualmente quando compartilhavam a mesma fonte. Separar
+por família resolve sem depender só de cor ou tamanho.
+
+Base de corpo: **16px**. Nunito tem altura-x generosa e não precisa do
+acréscimo que a serif anterior exigia.
 
 Medida de leitura das respostas: `max-width: 70ch`.
 

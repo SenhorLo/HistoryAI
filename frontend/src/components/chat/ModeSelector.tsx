@@ -52,13 +52,15 @@ export default function ModeSelector({
             key={value}
             className={cn(
               // min-w-11 sustenta o alvo de 44px quando o rótulo some no mobile
-              "flex items-center justify-center gap-1.5 rounded-[0.6rem] px-2.5",
+              "ui-text flex items-center justify-center gap-1.5 rounded-[0.6rem] px-2.5",
               "min-h-11 min-w-11 text-xs font-semibold",
               "transition-colors duration-200",
               disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+              // ink-muted, não ink-subtle: o composer empilha superfícies mais
+              // claras e o subtle cai para 4.0:1 sobre elas
               active
                 ? "bg-accent-wash text-accent"
-                : "text-ink-subtle hover:text-ink",
+                : "text-ink-muted hover:text-ink",
             )}
           >
             <input
