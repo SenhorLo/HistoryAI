@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
-import { LogOut, Plus, Scroll, X } from "lucide-react";
+import { LogOut, Plus, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConversationItem from "./ConversationItem";
+import Logo from "./ui/Logo";
 import { IconButton } from "./ui/Button";
 import { useIsDesktop } from "../hooks/useMediaQuery";
 import { groupConversations } from "../lib/groupConversations";
@@ -84,14 +85,7 @@ export default function Sidebar({
         )}
       >
         <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
-          <span className="flex items-center gap-2 min-w-0">
-            <span className="grid place-items-center w-9 h-9 rounded-xl bg-accent-wash border border-accent-line shrink-0">
-              <Scroll size={18} className="text-accent" aria-hidden="true" />
-            </span>
-            <span className="font-system font-semibold tracking-widest text-accent truncate">
-              HISTORYAI
-            </span>
-          </span>
+          <Logo size="sm" boxed className="min-w-0" />
           {/* fechar a gaveta no mobile sem precisar acertar o overlay.
               Condicional, não `md:hidden`: a classe não venceria o
               `inline-flex` da base do IconButton. */}

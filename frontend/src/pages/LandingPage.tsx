@@ -6,11 +6,11 @@ import {
   Brain,
   FileText,
   MessagesSquare,
-  Scroll,
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 import LavaBackground from "../components/LavaBackground";
 import HeroSparks from "../components/HeroSparks";
+import Logo from "../components/ui/Logo";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { getToken } from "../lib/auth";
 
@@ -73,12 +73,7 @@ export default function LandingPage() {
             className="flex items-center gap-2 shrink-0 min-h-11"
             aria-label="HistoryAI, início"
           >
-            <span className="grid place-items-center w-9 h-9 rounded-xl bg-accent-wash border border-accent-line">
-              <Scroll size={18} className="text-accent" aria-hidden="true" />
-            </span>
-            <span className="font-system font-semibold tracking-widest text-accent">
-              HISTORYAI
-            </span>
+            <Logo size="sm" boxed />
           </Link>
 
           {/* menu central — escondido no mobile, onde a página é curta o

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Scroll } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 import LavaBackground from "../components/LavaBackground";
+import Logo from "../components/ui/Logo";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Alert } from "../components/ui/Alert";
@@ -70,13 +71,7 @@ export default function AuthPage({ mode }: Props) {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-          <Scroll
-            size={48}
-            className="mx-auto mb-3 text-accent"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          />
-          <p className="section-label text-accent">HistoryAI</p>
+          <Logo size="lg" className="mb-3" />
           <h1 className="text-3xl font-semibold text-accent mt-1">
             E se a história tivesse sido diferente?
           </h1>
