@@ -98,8 +98,10 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
   // O marcador [[DOC:pdf]] / [[DOC:pptx]] é um comando interno da IA e não deve
   // aparecer para o usuário: seguramos os últimos caracteres do stream (holdback)
   // até ter certeza de que não são o início de um marcador.
-  const MARKER_RE = /\[\[DOC:(pdf|pptx)\]\]/g;
-  const HOLDBACK = 12; // tamanho de "[[DOC:pptx]]"
+  const MARKER_RE = /\[\[DOC:(pdf|pptx|mindmap)\]\]/g;
+  // tamanho do marcador mais longo, "[[DOC:mindmap]]". Se ficar menor que
+  // isso, um marcador partido entre dois chunks do stream vaza para a tela.
+  const HOLDBACK = "[[DOC:mindmap]]".length;
   let fullText = "";
   let tail = "";
   let docKind: DocKind | null = null;
@@ -150,7 +152,12 @@ chatRouter.post("/:id/chat", chatLimiter, async (req: AuthRequest, res) => {
     if (docKind) {
       try {
         const { url, title } = await generateDocument(docKind, history);
-        const label = docKind === "pdf" ? "Baixar PDF" : "Baixar slides (PPTX)";
+        const label =
+          docKind === "pdf"
+            ? "Baixar PDF"
+            : docKind === "pptx"
+              ? "Baixar slides (PPTX)"
+              : "Baixar mapa mental (PDF)";
         emit(`\n\n---\n\n**Documento pronto:** [${title} — ${label}](${url})`);
       } catch (docErr) {
         console.error("Erro ao gerar documento:", docErr);
