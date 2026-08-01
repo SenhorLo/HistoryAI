@@ -79,13 +79,19 @@ export default function Sidebar({
         aria-label="Conversas"
         className={cn(
           "fixed md:relative z-30 h-full w-[17.5rem] shrink-0 flex flex-col",
-          "bg-surface-sunken border-r border-subtle",
+          /*
+            No mobile a gaveta é `fixed` e flutua POR CIMA do conteúdo, então
+            precisa ser opaca: surface-sunken tem 60% de opacidade e deixava a
+            página aparecer atrás do menu. No desktop ela fica dentro do shell,
+            lado a lado com o chat, e aí a translucidez é o efeito desejado.
+          */
+          "bg-surface md:bg-surface-sunken border-r border-subtle",
           "transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
-          <Logo size="sm" boxed className="min-w-0" />
+          <Logo size="sm" className="min-w-0" />
           {/* fechar a gaveta no mobile sem precisar acertar o overlay.
               Condicional, não `md:hidden`: a classe não venceria o
               `inline-flex` da base do IconButton. */}

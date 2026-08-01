@@ -73,7 +73,7 @@ export default function LandingPage() {
             className="flex items-center gap-2 shrink-0 min-h-11"
             aria-label="HistoryAI, início"
           >
-            <Logo size="sm" boxed />
+            <Logo size="sm" />
           </Link>
 
           {/* menu central — escondido no mobile, onde a página é curta o

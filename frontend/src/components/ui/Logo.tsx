@@ -20,7 +20,12 @@ import { cn } from "../../lib/cn";
 
 type Size = "sm" | "md" | "lg";
 
-const ICON_SIZE: Record<Size, number> = { sm: 18, md: 22, lg: 40 };
+/*
+  O ícone é maior que a altura da fonte de propósito: na marca, o pergaminho
+  tem cerca de 1,4x o corpo do texto, e é essa diferença que dá o peso visual
+  do símbolo ao lado do wordmark.
+*/
+const ICON_SIZE: Record<Size, number> = { sm: 22, md: 28, lg: 46 };
 
 /** Caixa arredondada atrás do ícone. Proporcional ao ícone. */
 const BOX: Record<Size, string> = {
@@ -82,7 +87,10 @@ export default function Logo({
       {variant === "lockup" && (
         <span
           className={cn(
-            "font-system font-semibold tracking-widest truncate",
+            // peso 700: o wordmark da marca é bem mais pesado que o texto de
+            // interface. Exige o Rubik 700 no link de fontes do index.html —
+            // sem ele o navegador engorda o 600 sozinho e sai borrado.
+            "font-system font-bold tracking-widest truncate",
             WORDMARK[size],
           )}
         >
