@@ -156,17 +156,20 @@
   --color-focus: var(--focus);
   --color-on-cta: var(--on-cta);
 
-  /* Duas famílias com papéis distintos, para separar o que o usuário LÊ do
-     que o sistema DIZ:
-       body   → Nunito, terminais arredondados: mensagens, títulos de
-                conversa, headings — tudo que é conteúdo;
-       system → Rubik, mais geométrica e compacta: rótulos de grupo,
-                botões, dicas, rodapé — tudo que é chrome da interface.
-     A diferença de desenho é o que deixa óbvio, na barra lateral, o que é
-     título de conversa e o que é etiqueta do sistema. */
-  --font-heading: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  --font-body: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  --font-system: "Rubik", system-ui, -apple-system, sans-serif;
+  /* A interface inteira é JetBrains Mono — headings, chrome e o que o
+     usuário digita. O desenho monoespaçado dá o ar de arquivo/terminal que
+     combina com o tratamento cinematográfico da landing.
+
+     A EXCEÇÃO é `reading`, usada só no corpo das respostas da IA. O produto
+     entrega ensaios longos de história, e monoespaçada dá a mesma largura a
+     toda letra: isso apaga a silhueta das palavras e cansa em leitura
+     contínua — exatamente o que uma fonte de código não precisa resolver.
+     Medido: a JetBrains Mono é 9% mais ESTREITA que a Nunito no mesmo
+     corpo, então a troca não reflui nem quebra layout. */
+  --font-heading: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+  --font-body: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+  --font-system: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+  --font-reading: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
 
   /* Raio dos cards (faixa do padrão bento) */
   --radius-card: 1rem;
@@ -187,8 +190,8 @@
   }
 
   body {
-    /* Nunito tem altura-x generosa: 16px já lê bem, sem o acréscimo que a
-       serif anterior exigia */
+    /* JetBrains Mono tem altura-x generosa: 16px já lê bem, sem o acréscimo
+       que a serif anterior exigia */
     font-family: var(--font-body);
     background-color: var(--surface);
     color: var(--ink);
@@ -561,11 +564,18 @@
 .markdown {
   /* medida de leitura: ~70 caracteres por linha */
   max-width: 70ch;
+  /* Única superfície que NÃO é monoespaçada. É aqui que chegam os ensaios
+     longos da IA, e é a leitura contínua que a mono penaliza. O resto da
+     interface — títulos, rótulos, botões, o que o usuário digita — segue
+     em JetBrains Mono. */
+  font-family: var(--font-reading);
 }
 .markdown h1,
 .markdown h2,
 .markdown h3 {
-  font-family: var(--font-heading);
+  /* headings da resposta acompanham o corpo dela, não o chrome: trocar de
+     família no meio de um texto que se lê de ponta a ponta só cria ruído */
+  font-family: var(--font-reading);
   font-weight: 600;
   margin-top: 1.4em;
   margin-bottom: 0.4em;
