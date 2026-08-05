@@ -266,8 +266,24 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
+  /* Vídeo de fundo em tela cheia. Fica em z-0, atrás do grão (z-2) e do
+     conteúdo (z-10). Decorativo: sai da árvore de acessibilidade e não
+     intercepta ponteiro. */
+  .hero-video {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
   /* Véu de leitura no pé do hero: o texto assenta em superfície sólida
-     enquanto o topo continua aberto para o fundo animado. */
+     enquanto o topo continua aberto para o fundo.
+     Sobe mais alto e mais opaco do que subiria sobre um fundo liso — o
+     vídeo tem áreas claras e escuras se movendo, e sem isso o contraste do
+     texto mudaria conforme o quadro. */
   .hero-veil {
     position: absolute;
     inset: 0;
@@ -275,8 +291,9 @@
     background: linear-gradient(
       to top,
       var(--surface-veil) 0%,
-      color-mix(in srgb, var(--surface-veil) 24%, transparent) 38%,
-      transparent 64%
+      var(--surface-veil) 22%,
+      color-mix(in srgb, var(--surface-veil) 62%, transparent) 48%,
+      transparent 78%
     );
   }
 

@@ -17,6 +17,7 @@ import HeroSparks from "../components/HeroSparks";
 import Logo from "../components/ui/Logo";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { useFramesAreRunning } from "../hooks/useFramesAreRunning";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { getToken } from "../lib/auth";
 import { cn } from "../lib/cn";
 
@@ -78,13 +79,37 @@ export default function LandingPage() {
     opacity 0 e invisível para sempre.
   */
   const entering = useFramesAreRunning();
+  /*
+    Vídeo que se move sozinho por mais de 5 segundos é exatamente o caso do
+    WCAG 2.2.2. Quem pediu menos movimento não recebe o vídeo: cai no fundo
+    de blobs, que o CSS já congela. Não é só trocar autoPlay por false —
+    parado, o <video> mostraria um retângulo preto até decodificar o
+    primeiro quadro.
+  */
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   return (
     <div ref={scope} className="min-h-dvh bg-surface text-ink">
       <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
       </a>
-      <LavaBackground />
+
+      {reduceMotion ? (
+        <LavaBackground />
+      ) : (
+        <video
+          className="hero-video"
+          src="/fundo-hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          // decorativo: o conteúdo da página não depende dele
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+      )}
+
       {/* textura de papel sobre a página inteira; puramente decorativa */}
       <div className="paper-grain" aria-hidden="true" />
 
