@@ -55,12 +55,15 @@
   --surface-solid: #ffffff;
 
   /* Véu sobre o vídeo, na cor da superfície. Uniforme e do tamanho da
-     janela: é o que faz a página inteira ler como o fundo escuro do chat e
+     janela: é o que faz a página inteira ler como o mesmo fundo do chat e
      do login, em vez de mudar de tom onde o hero acaba.
-     0.94 no claro porque aqui o vídeo é ESCURO — ele derruba a luminosidade
-     do pergaminho e, com ela, o contraste do âmbar (medido: 4,44:1 a 0.88,
-     4,86:1 a 0.92). */
-  --video-scrim: rgb(239 232 218 / 0.94);
+     Só 0.30 aqui porque o tema claro tem VÍDEO PRÓPRIO, já na faixa do
+     pergaminho: a região do texto fica entre 206 e 238 de luminância e
+     passa contraste até sem véu nenhum (âmbar em 4,51:1). Com 0.30 sobe
+     para 4,89:1 e ainda mostra 70% do vídeo.
+     Era 0.94 enquanto o tema claro reaproveitava o vídeo escuro — aí o véu
+     precisava compensar o escurecimento, e sobrava 6% de vídeo visível. */
+  --video-scrim: rgb(239 232 218 / 0.3);
 
   /* Folha dourada do headline. Todas as paradas passam 4,5:1 sobre o
      pergaminho (pior caso 5,62:1), bem acima do 3:1 que texto grande exige.
