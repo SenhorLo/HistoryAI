@@ -48,6 +48,25 @@
 
   /* opacidade dos blobs do fundo lava */
   --lava-opacity: 0.5;
+
+  /* Vidro líquido: superfície translúcida com brilho por cima. Clareia o que
+     está atrás, então no tema claro a base é branca. */
+  --glass-bg: rgb(255 253 247 / 0.35);
+  --glass-sheen: rgb(255 255 255 / 0.6);
+
+  /* Véu de leitura no pé do hero — a mesma cor da superfície, com alfa, para
+     o texto assentar mesmo sobre os blobs do fundo. */
+  --surface-veil: rgb(239 232 218 / 0.82);
+
+  /* Folha dourada do headline. Todas as paradas passam 4,5:1 sobre o
+     pergaminho (pior caso 5,62:1), bem acima do 3:1 que texto grande exige.
+     Um dourado claro aqui daria ~2:1 e é justamente o erro que o design
+     system já proíbe. */
+  --gild: linear-gradient(180deg, #78350f 0%, #92400e 42%, #854d0e 62%, #78350f 100%);
+
+  /* textura do papel: escurece o que está embaixo */
+  --grain-blend: multiply;
+  --grain-opacity: 0.055;
 }
 
 .dark {
@@ -78,8 +97,21 @@
 
   --focus: #fbbf24;
 
-
   --lava-opacity: 0.22;
+
+  /* No escuro o vidro clareia a partir do branco, com muito menos alfa —
+     0.35 sobre quase-preto viraria um bloco cinza chapado. */
+  --glass-bg: rgb(255 255 255 / 0.06);
+  --glass-sheen: rgb(255 255 255 / 0.14);
+
+  --surface-veil: rgb(12 10 9 / 0.82);
+
+  /* Aqui o dourado pode ser claro de verdade: pior parada 9,2:1 sobre #0c0a09 */
+  --gild: linear-gradient(180deg, #fde68a 0%, #fbbf24 42%, #f59e0b 62%, #fcd34d 100%);
+
+  /* multiply sobre quase-preto seria invisível: no escuro o grão clareia */
+  --grain-blend: screen;
+  --grain-opacity: 0.07;
 }
 
 /* `inline` faz as utilities apontarem para a var em vez de copiar o valor,
@@ -218,6 +250,141 @@
     background-image: linear-gradient(100deg, var(--cta-to), var(--cta-from));
   }
 
+  /* ---------- Tratamento cinematográfico da landing ---------- */
+
+  /* Grão de papel sobre a página inteira. Fica ABAIXO do conteúdo (z-2,
+     contra z-10 do conteúdo): por cima, ele sujaria o texto. Puramente
+     decorativo, então sai da árvore de acessibilidade via aria-hidden no
+     elemento. */
+  .paper-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Véu de leitura no pé do hero: o texto assenta em superfície sólida
+     enquanto o topo continua aberto para o fundo animado. */
+  .hero-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      var(--surface-veil) 0%,
+      color-mix(in srgb, var(--surface-veil) 24%, transparent) 38%,
+      transparent 64%
+    );
+  }
+
+  /* Folha dourada: gradiente recortado no próprio texto. */
+  .gild {
+    background-image: var(--gild);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* No modo de alto contraste o sistema descarta a imagem de fundo, e um
+     texto com `color: transparent` simplesmente desaparece. Aqui ele volta
+     a ser texto sólido. */
+  @media (forced-colors: active) {
+    .gild {
+      background-image: none;
+      color: CanvasText;
+      forced-color-adjust: none;
+    }
+  }
+
+  /* Régua fina que se desenha da esquerda, como um traço de pena. */
+  .hairline {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      var(--accent),
+      color-mix(in srgb, var(--accent) 30%, transparent),
+      transparent
+    );
+  }
+
+  /* Vidro líquido. A borda dourada é um ::before com máscara: dois gradientes
+     em xor recortam o miolo e sobra só a moldura de 1,4px — dá para ter
+     borda em gradiente, que `border` sozinha não faz. */
+  .liquid-glass {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    background: var(--glass-bg);
+    background-blend-mode: luminosity;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: inset 0 1px 1px var(--glass-sheen);
+  }
+  .liquid-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      var(--accent) 0%,
+      color-mix(in srgb, var(--accent) 30%, transparent) 22%,
+      transparent 42%,
+      transparent 58%,
+      color-mix(in srgb, var(--accent) 30%, transparent) 78%,
+      var(--accent) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+
+  /* Entrada escalonada: desfoca, sobe e revela.
+
+     A classe `.is-entering` é aplicada pelo React só quando há quadros sendo
+     compostos — mesma trava do `.is-rising`. Sem ela, todo elemento já está
+     no estado final. É o que impede o pior caso: uma animação que começa em
+     opacity 0 e nunca avança deixaria a landing inteira em branco. */
+  .is-entering [data-enter] {
+    animation: blurFadeUp 1.1s ease-out both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+  @keyframes blurFadeUp {
+    from {
+      opacity: 0;
+      filter: blur(20px);
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0);
+    }
+  }
+
+  .is-entering [data-ink-draw] {
+    transform-origin: left;
+    animation: inkDraw 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+  @keyframes inkDraw {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
   /* Pontos luminosos do hero. Decorativos: ficam fora da árvore de
      acessibilidade e param de pulsar em prefers-reduced-motion. */
   .spark {
@@ -339,6 +506,24 @@
      ainda apareceriam em cascata, uma de cada vez */
   .is-rising [data-char] {
     animation-delay: 0ms !important;
+  }
+  /* mesma coisa para a entrada da landing: sem zerar o atraso, os blocos
+     ainda pipocariam em sequência, só que instantaneamente cada um */
+  .is-entering [data-enter],
+  .is-entering [data-ink-draw] {
+    animation-delay: 0ms !important;
+  }
+  /* o desfoque é a parte que mais incomoda quem pediu menos movimento:
+     o elemento aparece direto, sem passar por blur nem deslocamento */
+  .is-entering [data-enter] {
+    animation-name: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+  .is-entering [data-ink-draw] {
+    animation-name: none;
+    transform: none;
   }
 }
 
