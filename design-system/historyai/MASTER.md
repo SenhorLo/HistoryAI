@@ -33,27 +33,28 @@ O que se aproveitou da recomendação foi a **tipografia**.
 
 ## Tipografia
 
-A interface é monoespaçada; a **exceção** é o corpo das respostas da IA.
+Duas famílias com **papéis semânticos distintos** — a diferença de desenho é
+o que separa, de relance, o que o usuário lê do que o sistema diz.
 
 | Papel | Fonte | Uso |
 |---|---|---|
-| `font-body` / `font-heading` / `font-system` | **JetBrains Mono** | Tudo: headings, rótulos, botões, sidebar, rodapé e o que o usuário digita |
-| `font-reading` | **Nunito** | Só o bloco `.markdown` — o corpo das respostas da IA |
+| `font-body` / `font-heading` | **Nunito** | Conteúdo: mensagens da IA, títulos de conversa, headings. Terminais arredondados |
+| `font-system` | **Rubik** | Chrome: rótulos de grupo, botões, dicas, rodapé, meta |
 
 Aplicação do chrome pela classe `.ui-text`; rótulos de seção pela
-`.section-label` (caixa-alta + entreletra 0.14em).
+`.section-label` (Rubik + caixa-alta + entreletra 0.14em).
 
-**Por que a exceção:** o produto entrega ensaios longos de história.
-Monoespaçada dá a mesma largura a toda letra, o que apaga a silhueta das
-palavras e cansa em leitura contínua — é o único lugar do app onde isso
-pesa. O resto da interface ganha com o desenho de arquivo/terminal.
+**Por que duas famílias:** numa barra lateral, "ÚLTIMOS 7 DIAS" e um título de
+conversa competiam visualmente quando compartilhavam a mesma fonte. Separar
+por família resolve sem depender só de cor ou tamanho.
 
-**Não vale supor largura:** medido, a JetBrains Mono é ~9% mais ESTREITA que
-a Nunito no mesmo corpo (e 16% mais que a Rubik em display), ao contrário do
-que "monoespaçada é larga" sugere. A troca não reflui layout.
+> Houve uma passagem por **JetBrains Mono** em toda a interface. Foi
+> revertida: o ganho estético não compensou perder essa separação de papéis.
+> Registro útil da época — medido, a mono era ~9% mais **estreita** que a
+> Nunito no mesmo corpo, ao contrário do que se supõe.
 
-Base de corpo: **16px**. A JetBrains Mono tem altura-x generosa e não precisa
-do acréscimo que a serif anterior exigia.
+Base de corpo: **16px**. Nunito tem altura-x generosa e não precisa do
+acréscimo que a serif anterior exigia.
 
 Medida de leitura das respostas: `max-width: 70ch`.
 

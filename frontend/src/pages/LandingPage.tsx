@@ -12,12 +12,11 @@ import {
   Scroll,
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
-import LavaBackground from "../components/LavaBackground";
+import CinematicBackground from "../components/CinematicBackground";
 import HeroSparks from "../components/HeroSparks";
 import Logo from "../components/ui/Logo";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { useFramesAreRunning } from "../hooks/useFramesAreRunning";
-import { useMediaQuery } from "../hooks/useMediaQuery";
 import { getToken } from "../lib/auth";
 import { cn } from "../lib/cn";
 
@@ -79,14 +78,6 @@ export default function LandingPage() {
     opacity 0 e invisível para sempre.
   */
   const entering = useFramesAreRunning();
-  /*
-    Vídeo que se move sozinho por mais de 5 segundos é exatamente o caso do
-    WCAG 2.2.2. Quem pediu menos movimento não recebe o vídeo: cai no fundo
-    de blobs, que o CSS já congela. Não é só trocar autoPlay por false —
-    parado, o <video> mostraria um retângulo preto até decodificar o
-    primeiro quadro.
-  */
-  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   return (
     <div ref={scope} className="min-h-dvh bg-surface text-ink">
@@ -94,28 +85,7 @@ export default function LandingPage() {
         Pular para o conteúdo
       </a>
 
-      {reduceMotion ? (
-        <LavaBackground />
-      ) : (
-        <>
-          <video
-            className="hero-video"
-            src="/fundo-hero.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            // decorativo: o conteúdo da página não depende dele
-            aria-hidden="true"
-            tabIndex={-1}
-          />
-          {/* véu uniforme sobre o vídeo — ver .video-scrim no index.css */}
-          <div className="video-scrim" aria-hidden="true" />
-        </>
-      )}
-
-      {/* textura de papel sobre a página inteira; puramente decorativa */}
-      <div className="paper-grain" aria-hidden="true" />
+      <CinematicBackground />
 
       <div className="relative z-10">
         <nav
@@ -184,14 +154,21 @@ export default function LandingPage() {
               <div
                 data-ink-draw
                 style={enter(380)}
-                className="hairline w-16 mt-2.5 mb-6"
+                className="hairline w-16 mt-2.5 mb-5 sm:mb-6"
                 aria-hidden="true"
               />
 
+              {/*
+                Escondido no mobile de propósito. Em 375px os rótulos em
+                português quebram em 3 linhas e custam 97px (69 + margem) de
+                uma tela que já estava com 62px de folga — e dizem o mesmo
+                que o parágrafo logo abaixo ("parte do fato documentado,
+                identifica o ponto de divergência"). É redundância cara.
+              */}
               <ul
                 data-enter
                 style={enter(440)}
-                className="ui-text flex flex-wrap gap-x-6 gap-y-2 mb-7 text-[11px] tracking-[0.22em] uppercase text-ink-muted"
+                className="ui-text hidden sm:flex flex-wrap gap-x-6 gap-y-2 mb-7 text-[11px] tracking-[0.22em] uppercase text-ink-muted"
               >
                 {HERO_META.map(({ icon: Icon, label }) => (
                   <li key={label} className="flex items-center gap-2">
@@ -215,14 +192,14 @@ export default function LandingPage() {
               <p
                 data-enter
                 style={enter(640)}
-                className="mt-6 text-lg md:text-xl text-ink-muted max-w-2xl leading-relaxed"
+                className="mt-5 sm:mt-6 text-base sm:text-lg md:text-xl text-ink-muted max-w-2xl leading-relaxed"
               >
                 O HistoryAI explora cenários hipotéticos com rigor acadêmico:
                 parte do fato documentado, identifica o ponto de divergência e
                 separa sempre o que é história do que é especulação.
               </p>
 
-              <div className="mt-9 flex flex-wrap items-center gap-3 sm:gap-4">
+              <div className="mt-7 sm:mt-9 flex flex-wrap items-center gap-3 sm:gap-4">
                 <Link
                   to={ctaTarget}
                   data-enter
@@ -248,7 +225,7 @@ export default function LandingPage() {
               <p
                 data-enter
                 style={enter(980)}
-                className="ui-text mt-10 flex items-center gap-2 text-[10px] tracking-[0.28em] uppercase text-ink-muted"
+                className="ui-text mt-7 sm:mt-10 flex items-center gap-2 text-[10px] tracking-[0.28em] uppercase text-ink-muted"
               >
                 <PenTool size={12} className="text-accent" aria-hidden="true" />
                 Separa fato de especulação

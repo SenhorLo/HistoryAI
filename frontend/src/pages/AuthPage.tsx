@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
-import LavaBackground from "../components/LavaBackground";
+import CinematicBackground from "../components/CinematicBackground";
 import Logo from "../components/ui/Logo";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
@@ -65,17 +65,24 @@ export default function AuthPage({ mode }: Props) {
   }
 
   return (
-    <div className="min-h-dvh bg-surface text-ink flex items-center justify-center px-4 py-10">
-      <LavaBackground />
+    <div className="min-h-dvh bg-surface text-ink">
+      <CinematicBackground />
       <ThemeToggle className="absolute top-4 right-4 z-20" />
 
-      <div className="relative z-10 w-full max-w-md">
-        <div className="text-center mb-8">
-          <Logo size="lg" className="mb-3" />
-          <h1 className="text-3xl font-semibold text-accent mt-1">
-            E se a história tivesse sido diferente?
-          </h1>
-        </div>
+      {/*
+        Conteúdo à esquerda, na mesma gutter da landing (px-6 / md:px-12),
+        para as duas telas lerem como o mesmo produto. No mobile o max-w-md
+        já ocupa a largura toda, então o alinhamento à esquerda não cria
+        desequilíbrio.
+      */}
+      <div className="relative z-10 min-h-dvh flex items-center px-6 md:px-12 py-10">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <Logo size="lg" className="mb-3" />
+            <h1 className="text-3xl font-semibold text-accent mt-1">
+              E se a história tivesse sido diferente?
+            </h1>
+          </div>
 
         <form
           onSubmit={handleSubmit}
@@ -137,14 +144,15 @@ export default function AuthPage({ mode }: Props) {
           </Link>
         </form>
 
-        {/* saída sem beco: quem caiu aqui sem querer criar conta consegue voltar */}
-        <Link
-          to="/"
-          className="mt-4 flex items-center justify-center gap-1.5 min-h-11 text-sm text-ink-muted hover:text-ink transition-colors duration-200"
-        >
-          <ArrowLeft size={15} aria-hidden="true" />
-          Voltar para a página inicial
-        </Link>
+          {/* saída sem beco: quem caiu aqui sem querer criar conta consegue voltar */}
+          <Link
+            to="/"
+            className="mt-4 flex items-center justify-center gap-1.5 min-h-11 text-sm text-ink-muted hover:text-ink transition-colors duration-200"
+          >
+            <ArrowLeft size={15} aria-hidden="true" />
+            Voltar para a página inicial
+          </Link>
+        </div>
       </div>
     </div>
   );

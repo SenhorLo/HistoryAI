@@ -76,6 +76,13 @@ export default function ChatPage() {
         Pular para a conversa
       </a>
       <LavaBackground />
+      {/*
+        Mesma textura da landing, sem o vídeo. O chat é tela de trabalho: um
+        vídeo em loop atrás de respostas longas competiria com a leitura e
+        rodaria o tempo todo em segundo plano. O grão entrega a continuidade
+        visual custando um PNG de ruído em CSS.
+      */}
+      <div className="paper-grain" aria-hidden="true" />
 
       <div className="app-shell">
         {(!collapsed || !isDesktop) && (

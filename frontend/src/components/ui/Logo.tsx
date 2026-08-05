@@ -13,7 +13,7 @@ import { cn } from "../../lib/cn";
   Um SVG com a cor embutida ficaria ilegível em um dos dois temas.
 
   O wordmark é texto de verdade, não um path: ele é chrome da interface, então
-  usa a fonte do sistema (--font-system) como o resto da interface e acompanha o tamanho de
+  usa Rubik (--font-system) como o resto do sistema e acompanha o tamanho de
   fonte do usuário. Vetorizar as letras congelaria a fonte e quebraria a busca
   na página.
 */
@@ -88,7 +88,7 @@ export default function Logo({
         <span
           className={cn(
             // peso 700: o wordmark da marca é bem mais pesado que o texto de
-            // interface. Exige o peso 700 no link de fontes do index.html —
+            // interface. Exige o Rubik 700 no link de fontes do index.html —
             // sem ele o navegador engorda o 600 sozinho e sai borrado.
             "font-system font-bold tracking-widest truncate",
             WORDMARK[size],
