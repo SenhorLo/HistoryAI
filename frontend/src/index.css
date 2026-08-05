@@ -49,10 +49,10 @@
   /* opacidade dos blobs do fundo lava */
   --lava-opacity: 0.5;
 
-  /* Vidro líquido: superfície translúcida com brilho por cima. Clareia o que
-     está atrás, então no tema claro a base é branca. */
-  --glass-bg: rgb(255 253 247 / 0.35);
-  --glass-sheen: rgb(255 255 255 / 0.6);
+  /* Superfície OPACA de botões e cards. Diferente de --surface-raised, que
+     é translúcida: sobre vídeo, translucidez deixa a imagem atravessar o
+     botão e o conteúdo por trás disputa a leitura do rótulo. */
+  --surface-solid: #ffffff;
 
   /* Véu sobre o vídeo, na cor da superfície. Uniforme e do tamanho da
      janela: é o que faz a página inteira ler como o fundo escuro do chat e
@@ -103,10 +103,9 @@
 
   --lava-opacity: 0.22;
 
-  /* No escuro o vidro clareia a partir do branco, com muito menos alfa —
-     0.35 sobre quase-preto viraria um bloco cinza chapado. */
-  --glass-bg: rgb(255 255 255 / 0.06);
-  --glass-sheen: rgb(255 255 255 / 0.14);
+  /* Quase preto, um passo acima do fundo — o bastante para o botão existir
+     como forma sem virar um bloco cinza. */
+  --surface-solid: #1c1917;
 
   /* Calibrado com o brilho REAL do vídeo, não com o pior caso teórico.
      Medido na metade esquerda (onde fica o texto): pico de luminância 144
@@ -342,43 +341,19 @@
     );
   }
 
-  /* Vidro líquido. A borda dourada é um ::before com máscara: dois gradientes
-     em xor recortam o miolo e sobra só a moldura de 1,4px — dá para ter
-     borda em gradiente, que `border` sozinha não faz. */
-  .liquid-glass {
-    position: relative;
-    overflow: hidden;
-    border: none;
-    background: var(--glass-bg);
-    background-blend-mode: luminosity;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-    box-shadow: inset 0 1px 1px var(--glass-sheen);
+  /* Painel opaco de botões e cards.
+     Substituiu o vidro líquido, que tinha uma moldura em gradiente âmbar
+     desenhada num ::before mascarado. A moldura foi retirada a pedido: ela
+     puxava a atenção para a borda em vez do rótulo, e competia com o âmbar
+     do CTA principal, que é o único elemento que deveria brilhar.
+     Sem backdrop-filter também: além de custar GPU em vários elementos ao
+     mesmo tempo, deixava o vídeo atravessar o botão. */
+  .solid-panel {
+    background: var(--surface-solid);
+    border: 1px solid var(--border-subtle);
   }
-  .liquid-glass::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1.4px;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      var(--accent) 0%,
-      color-mix(in srgb, var(--accent) 30%, transparent) 22%,
-      transparent 42%,
-      transparent 58%,
-      color-mix(in srgb, var(--accent) 30%, transparent) 78%,
-      var(--accent) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
+  .solid-panel:hover {
+    border-color: var(--border-strong);
   }
 
   /* Entrada escalonada: desfoca, sobe e revela.

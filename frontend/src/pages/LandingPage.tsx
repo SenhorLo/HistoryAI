@@ -149,7 +149,7 @@ export default function LandingPage() {
             <ThemeToggle />
             <Link
               to={loggedIn ? "/chat" : "/login"}
-              className="ui-text liquid-glass inline-flex items-center min-h-11 px-5 rounded-full text-accent font-semibold transition-colors duration-200"
+              className="ui-text solid-panel inline-flex items-center min-h-11 px-5 rounded-full text-accent font-semibold transition-colors duration-200"
             >
               {loggedIn ? "Abrir chat" : "Entrar"}
             </Link>
@@ -233,16 +233,6 @@ export default function LandingPage() {
                   <ArrowDownRight size={20} aria-hidden="true" />
                 </Link>
 
-                <a
-                  href="#exemplos"
-                  data-enter
-                  style={enter(840)}
-                  className="ui-text liquid-glass inline-flex items-center gap-2 min-h-11 rounded-full px-7 sm:px-8 py-3.5 text-base font-semibold text-ink transition-colors duration-200"
-                >
-                  Ver exemplos
-                  <ArrowRight size={16} aria-hidden="true" />
-                </a>
-
                 {!loggedIn && (
                   <Link
                     to="/login"
@@ -287,7 +277,7 @@ export default function LandingPage() {
               {FEATURES.map(({ icon: Icon, title, text }) => (
                 <li
                   key={title}
-                  className="liquid-glass rounded-card p-6 hover:bg-surface-raised transition-colors duration-200"
+                  className="solid-panel rounded-card p-6 transition-colors duration-200"
                 >
                   <span className="grid place-items-center w-11 h-11 rounded-xl bg-accent-wash border border-accent-line mb-4">
                     <Icon size={20} className="text-accent" aria-hidden="true" />
@@ -349,7 +339,7 @@ export default function LandingPage() {
               {EXAMPLES.map((e) => (
                 <li
                   key={e}
-                  className="liquid-glass text-sm rounded-full px-4 py-2.5 text-ink-muted"
+                  className="solid-panel text-sm rounded-full px-4 py-2.5 text-ink-muted"
                 >
                   {e}
                 </li>
