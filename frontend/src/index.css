@@ -54,9 +54,13 @@
   --glass-bg: rgb(255 253 247 / 0.35);
   --glass-sheen: rgb(255 255 255 / 0.6);
 
-  /* Véu de leitura no pé do hero — a mesma cor da superfície, com alfa, para
-     o texto assentar mesmo sobre os blobs do fundo. */
-  --surface-veil: rgb(239 232 218 / 0.82);
+  /* Véu sobre o vídeo, na cor da superfície. Uniforme e do tamanho da
+     janela: é o que faz a página inteira ler como o fundo escuro do chat e
+     do login, em vez de mudar de tom onde o hero acaba.
+     0.94 no claro porque aqui o vídeo é ESCURO — ele derruba a luminosidade
+     do pergaminho e, com ela, o contraste do âmbar (medido: 4,44:1 a 0.88,
+     4,86:1 a 0.92). */
+  --video-scrim: rgb(239 232 218 / 0.94);
 
   /* Folha dourada do headline. Todas as paradas passam 4,5:1 sobre o
      pergaminho (pior caso 5,62:1), bem acima do 3:1 que texto grande exige.
@@ -104,7 +108,14 @@
   --glass-bg: rgb(255 255 255 / 0.06);
   --glass-sheen: rgb(255 255 255 / 0.14);
 
-  --surface-veil: rgb(12 10 9 / 0.82);
+  /* Calibrado com o brilho REAL do vídeo, não com o pior caso teórico.
+     Medido na metade esquerda (onde fica o texto): pico de luminância 144
+     de 255, média 24,8 — é um vídeo escuro de propósito. Supor um quadro
+     branco levava a 0.86, que apagava o vídeo sem necessidade.
+     Contra o pico real, 0.68 deixa ink em 11,2:1, ink-muted em 4,85:1 e o
+     âmbar em 7,3:1, mostrando 32% do vídeo. O limite antes de reprovar é
+     0.65 (ink-muted em 4,57:1). */
+  --video-scrim: rgb(12 10 9 / 0.68);
 
   /* Aqui o dourado pode ser claro de verdade: pior parada 9,2:1 sobre #0c0a09 */
   --gild: linear-gradient(180deg, #fde68a 0%, #fbbf24 42%, #f59e0b 62%, #fcd34d 100%);
@@ -279,22 +290,24 @@
     pointer-events: none;
   }
 
-  /* Véu de leitura no pé do hero: o texto assenta em superfície sólida
-     enquanto o topo continua aberto para o fundo.
-     Sobe mais alto e mais opaco do que subiria sobre um fundo liso — o
-     vídeo tem áreas claras e escuras se movendo, e sem isso o contraste do
-     texto mudaria conforme o quadro. */
-  .hero-veil {
-    position: absolute;
+  /*
+    Véu do vídeo. UNIFORME e do tamanho da janela, de propósito.
+
+    Antes isto era um gradiente preso ao hero, e era exatamente o defeito:
+    o véu chegava a 82% de opacidade na borda de baixo do hero e sumia um
+    pixel depois, deixando o vídeo em brilho total atrás das seções. A
+    emenda aparecia como uma faixa atravessando a página.
+
+    Sendo `fixed` e sem gradiente, não existe borda para aparecer — o fundo
+    tem o mesmo tom em qualquer ponto da rolagem, que é como o chat e o
+    login se comportam.
+  */
+  .video-scrim {
+    position: fixed;
     inset: 0;
+    z-index: 1;
     pointer-events: none;
-    background: linear-gradient(
-      to top,
-      var(--surface-veil) 0%,
-      var(--surface-veil) 22%,
-      color-mix(in srgb, var(--surface-veil) 62%, transparent) 48%,
-      transparent 78%
-    );
+    background: var(--video-scrim);
   }
 
   /* Folha dourada: gradiente recortado no próprio texto. */

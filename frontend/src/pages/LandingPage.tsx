@@ -97,17 +97,21 @@ export default function LandingPage() {
       {reduceMotion ? (
         <LavaBackground />
       ) : (
-        <video
-          className="hero-video"
-          src="/fundo-hero.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          // decorativo: o conteúdo da página não depende dele
-          aria-hidden="true"
-          tabIndex={-1}
-        />
+        <>
+          <video
+            className="hero-video"
+            src="/fundo-hero.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            // decorativo: o conteúdo da página não depende dele
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+          {/* véu uniforme sobre o vídeo — ver .video-scrim no index.css */}
+          <div className="video-scrim" aria-hidden="true" />
+        </>
       )}
 
       {/* textura de papel sobre a página inteira; puramente decorativa */}
@@ -116,7 +120,7 @@ export default function LandingPage() {
       <div className="relative z-10">
         <nav
           aria-label="Principal"
-          className="max-w-6xl mx-auto flex items-center justify-between gap-4 px-6 py-5"
+          className="flex items-center justify-between gap-4 px-6 md:px-12 py-5"
         >
           <Link
             to="/"
@@ -160,15 +164,15 @@ export default function LandingPage() {
             embaixo. O espaço vazio em cima é o que deixa o fundo animado
             respirar, e o texto baixo sinaliza que a página continua.
           */}
-          <header className="relative flex min-h-[calc(100dvh-5.25rem)] flex-col justify-end overflow-hidden px-6 pb-14 md:pb-20">
+          <header className="relative flex min-h-[calc(100dvh-5.25rem)] flex-col justify-end overflow-hidden px-6 md:px-12 pb-14 md:pb-20">
             <HeroSparks />
-            <div className="hero-veil" aria-hidden="true" />
 
             <div
-              className={cn(
-                "relative max-w-6xl mx-auto w-full",
-                entering && "is-entering",
-              )}
+              /* sem max-w nem mx-auto: centralizar deixava ~360px de margem
+                 morta à esquerda numa tela larga. O texto agora encosta na
+                 mesma gutter da nav, e a medida de leitura continua contida
+                 pelos max-w do headline e do parágrafo. */
+              className={cn("relative w-full", entering && "is-entering")}
             >
               <p
                 data-enter
@@ -187,7 +191,7 @@ export default function LandingPage() {
               <ul
                 data-enter
                 style={enter(440)}
-                className="ui-text flex flex-wrap gap-x-6 gap-y-2 mb-7 text-[11px] tracking-[0.22em] uppercase text-ink-subtle"
+                className="ui-text flex flex-wrap gap-x-6 gap-y-2 mb-7 text-[11px] tracking-[0.22em] uppercase text-ink-muted"
               >
                 {HERO_META.map(({ icon: Icon, label }) => (
                   <li key={label} className="flex items-center gap-2">
@@ -254,7 +258,7 @@ export default function LandingPage() {
               <p
                 data-enter
                 style={enter(980)}
-                className="ui-text mt-10 flex items-center gap-2 text-[10px] tracking-[0.28em] uppercase text-ink-subtle"
+                className="ui-text mt-10 flex items-center gap-2 text-[10px] tracking-[0.28em] uppercase text-ink-muted"
               >
                 <PenTool size={12} className="text-accent" aria-hidden="true" />
                 Separa fato de especulação
@@ -365,7 +369,7 @@ export default function LandingPage() {
         </main>
 
         <footer className="border-t border-subtle mt-8 py-8 text-center">
-          <p className="ui-text text-sm text-ink-subtle">
+          <p className="ui-text text-sm text-ink-muted">
             HistoryAI — estudo de história com inteligência artificial
           </p>
         </footer>
